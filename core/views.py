@@ -36,7 +36,7 @@ from .models import (
     ScooterLevel, ScooterStats, WithdrawalRequest, DailyReport
 )
 from .forms import CustomPasswordChangeForm, ProfileUpdateForm
-from .utils import generate_scooter_stats
+# generate_scooter_stats определена локально в этом файле (строка 455)
 
 
 
