@@ -1,0 +1,192 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход — Zeepy</title>
+
+    <!-- ✅ Tailwind (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- ✅ Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- ✅ Font Awesome (без 403 ошибки) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <!-- ✅ Vanta.js & Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.fog.min.js"></script>
+
+    <!-- ✅ Favicon -->
+    <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon" />
+</head>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0D1117; /* Базовый цвет фона */
+        }
+        
+        /* --- 🔥 Стили для 3D-фона --- */
+        #vanta-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0; /* Фон находится сзади всего */
+        }
+
+        /* --- 🔥 Стили для "стеклянной" карточки с интерактивным бликом --- */
+        .login-card {
+            /* 1. Эффект матового стекла */
+            background: rgba(22, 27, 34, 0.65); /* Полупрозрачный фон */
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            
+            border: 1px solid rgba(88, 166, 255, 0.2);
+            border-radius: 0.75rem; /* 12px */
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative; /* Необходимо для позиционирования блика */
+            overflow: hidden; /* Скрываем части блика, выходящие за пределы */
+            z-index: 1;
+        }
+
+        /* 2. Создаем интерактивный блик, который следует за мышкой */
+        .login-card::before {
+            content: '';
+            position: absolute;
+            /* Позиционируем блик с помощью CSS-переменных, управляемых JS */
+            left: var(--mouse-x);
+            top: var(--mouse-y);
+            width: 300px;
+            height: 300px;
+            /* Создаем мягкий круговой градиент */
+            background: radial-gradient(circle at center, rgba(47, 129, 247, 0.25), transparent 60%);
+            transform: translate(-50%, -50%);
+            opacity: 0; /* Изначально блик невидим */
+            transition: opacity 0.3s ease-in-out;
+            pointer-events: none; /* Блик не должен мешать кликам */
+        }
+
+        /* 3. Показываем блик при наведении на всю страницу */
+        body:hover .login-card::before {
+            opacity: 1;
+        }
+
+        /* Мелкие улучшения для полей ввода */
+        .input-field {
+            transition: all 0.2s ease-in-out;
+        }
+        .input-field:focus {
+            box-shadow: 0 0 0 2px rgba(47, 129, 247, 0.5);
+        }
+    </style>
+    <script>
+        // Конфигурация Tailwind
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-dark': '#0D1117',
+                        'brand-surface': '#161B22',
+                        'brand-border': '#30363D',
+                        'brand-primary': '#2F81F7',
+                        'brand-primary-hover': '#58A6FF',
+                        'brand-secondary': '#8B949E',
+                        'brand-text': '#C9D1D9',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="text-brand-text antialiased">
+
+    <div id="vanta-bg"></div>
+
+    <div class="relative flex items-center justify-center min-h-screen px-4 z-10">
+        <div class="w-full max-w-md">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-white">Вход в <span class="text-brand-primary">Zeepy</span></h1>
+                <p class="text-brand-secondary mt-2">Войдите в свой аккаунт, чтобы продолжить.</p>
+            </div>
+
+            <div class="login-card p-8">
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    {% if messages %}
+                        <div class="mb-4">
+                            {% for message in messages %}
+                            <div class="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-md text-sm" role="alert">
+                                {{ message }}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="space-y-6">
+                        <div>
+                            <label for="username" class="block text-sm font-medium text-brand-text mb-2">Email</label>
+                            <input type="text" name="username" id="username" placeholder="Ваш Email" required class="input-field w-full bg-brand-dark/70 border border-brand-border rounded-md p-3 text-sm text-brand-text focus:outline-none focus:ring-0">
+                        </div>
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-brand-text mb-2">Пароль</label>
+                            <input type="password" name="password" id="password" placeholder="Пароль" required class="input-field w-full bg-brand-dark/70 border border-brand-border rounded-md p-3 text-sm text-brand-text focus:outline-none focus:ring-0">
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8">
+                        <button type="submit" class="w-full bg-brand-primary text-white font-bold py-3 px-4 rounded-md hover:bg-brand-primary-hover transition-colors">Войти</button>
+                    </div>
+                </form>
+            </div>
+            
+            <p class="text-center text-sm text-brand-secondary mt-6">
+                Нет аккаунта? <a href="{% url 'register' %}" class="font-semibold text-brand-primary-hover hover:underline">Зарегистрируйтесь</a>
+            </p>
+        </div>
+    </div>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- 🔥 Инициализация 3D-фона Vanta.js ---
+        VANTA.FOG({
+            el: "#vanta-bg",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            highlightColor: 0x3c83f9,   // Светло-синий
+            midtoneColor: 0x89299d,   // Пурпурный
+            lowlightColor: 0x1f4a94,    // Глубокий синий
+            baseColor: 0xd1117,      // Основной темный цвет
+            blurFactor: 0.60,
+            speed: 1.20,
+            zoom: 0.80
+        });
+
+        // --- 🔥 Скрипт для отслеживания мыши и перемещения блика ---
+        const loginCard = document.querySelector('.login-card');
+        
+        window.addEventListener('mousemove', (e) => {
+            const rect = loginCard.getBoundingClientRect();
+            // Вычисляем позицию мыши относительно карточки
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // Устанавливаем CSS-переменные
+            loginCard.style.setProperty('--mouse-x', `${x}px`);
+            loginCard.style.setProperty('--mouse-y', `${y}px`);
+        });
+    });
+    </script>
+
+</body>
+</html>

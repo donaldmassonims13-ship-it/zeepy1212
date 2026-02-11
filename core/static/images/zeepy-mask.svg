@@ -1,0 +1,13 @@
+<svg width="1400" height="600" viewBox="0 0 1400 600" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .text {
+      font-family: 'Inter', sans-serif; /* Используем ваш шрифт */
+      font-size: 200px;
+      font-weight: 700; /* Жирное начертание */
+      fill: white; /* Цвет маски всегда белый */
+    }
+  </style>
+  <text x="50%" y="50%" dy=".35em" text-anchor="middle" class="text">
+    zeepy
+  </text>
+</svg>

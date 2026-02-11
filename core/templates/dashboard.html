@@ -1,0 +1,754 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zeepy — Личный кабинет</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <style>
+        :root {
+            --glow-color: rgba(47, 129, 247, 0.7);
+            --glow-color-special: rgba(96, 165, 250, 0.8);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: #C9D1D9;
+            background-color: #0D1117;
+            background-image: linear-gradient(
+                180deg,
+                #0D1117 0%,
+                #111827 25%,
+                #1D1B36 50%,
+                #112F41 75%,
+                #0D1117 100%
+            );
+            background-size: 100% 400%;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            transition: background-position 0.5s ease-out;
+        }
+        
+        nav {
+            background-color: rgba(22, 27, 34, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        /* Анимация мобильного меню в стиле macOS */
+        #mobile-menu {
+            transform-origin: top;
+            transform: scaleY(0);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        #mobile-menu.menu-open {
+            transform: scaleY(1);
+        }
+
+        /* ✨ НОВОЕ: Стили для "хрустальных" карточек */
+        .crystal-card {
+            background: rgba(22, 27, 34, 0.6);
+            border: 1px solid rgba(48, 54, 61, 0.5); /* Более мягкая граница */
+            border-radius: 0.75rem;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.5s ease;
+            backdrop-filter: blur(8px); /* Эффект размытия для "хрусталя" */
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .crystal-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            background: rgba(22, 27, 34, 0.8); /* Чуть темнее при наведении */
+        }
+
+        .crystal-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: inherit;
+            border: 1px solid transparent;
+            background: radial-gradient(800px circle at var(--mouse-x) var(--mouse-y), var(--glow-color), transparent 40%) border-box;
+            -webkit-mask: 
+                linear-gradient(#fff 0 0) padding-box, 
+                linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .crystal-card:hover::before {
+            opacity: 1;
+        }
+        
+        .crystal-card.special-offer {
+            --glow-color: rgba(96, 165, 250, 0.9);
+            border: 2px solid rgba(251, 191, 36, 0.7); /* Более выраженная граница */
+        }
+
+        .discount-badge {
+            position: absolute;
+            top: -1px;
+            right: 16px;
+            background: linear-gradient(45deg, #fbbf24, #f59e0b);
+            color: #422006;
+            padding: 4px 12px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 85%, 0 100%);
+            transform: translateY(-1px);
+            animation: pulse-badge 2s infinite;
+        }
+        
+        @keyframes pulse-badge {
+            0%, 100% { transform: translateY(-1px) scale(1); }
+            50% { transform: translateY(-3px) scale(1.05); }
+        }
+
+        .old-price {
+            text-decoration: line-through;
+            color: #8B949E;
+            font-size: 0.9em;
+            margin-right: 8px;
+        }
+
+        .modal-backdrop { background-color: rgba(0, 0, 0, 0.75); transition: opacity 0.3s ease-in-out; }
+        .modal-content { transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out; }
+        .modal-backdrop.hidden { display: none; }
+        .checkmark__circle { stroke-dasharray: 166; stroke-dashoffset: 166; stroke-width: 2; stroke-miterlimit: 10; stroke: #4BB543; fill: none; animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards; }
+        .checkmark { width: 80px; height: 80px; border-radius: 50%; display: block; stroke-width: 3; stroke: #fff; stroke-miterlimit: 10; margin: 10% auto; box-shadow: inset 0px 0px 0px #4BB543; animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both; }
+        .checkmark__check { transform-origin: 50% 50%; stroke-dasharray: 48; stroke-dashoffset: 48; animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards; }
+        @keyframes stroke { 100% { stroke-dashoffset: 0; } }
+        @keyframes scale { 0%, 100% { transform: none; } 50% { transform: scale3d(1.1, 1.1, 1); } }
+        @keyframes fill { 100% { box-shadow: inset 0px 0px 0px 40px #4BB543; } }
+
+        /* ✨ НОВОЕ: Анимация "радара/капли воды" для кнопки мониторинга */
+        .radar-button {
+            position: relative;
+            overflow: hidden;
+            z-index: 1; /* Чтобы эффект был под содержимым кнопки */
+        }
+
+        .radar-button::before,
+        .radar-button::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            background-color: rgba(16, 185, 129, 0.7); /* Зеленый цвет свечения */
+            animation: pulse-ripple 2.5s infinite ease-out;
+            z-index: -1; /* Под основным содержимым кнопки */
+        }
+
+        .radar-button::before {
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            transform: scale(0);
+            animation-delay: 0s;
+        }
+
+        .radar-button::after {
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            transform: scale(0);
+            animation-delay: 1.25s; /* Задержка для второго импульса */
+        }
+
+        @keyframes pulse-ripple {
+            0% {
+                transform: scale(0);
+                opacity: 0.7;
+            }
+            50% {
+                transform: scale(1);
+                opacity: 0.3;
+            }
+            100% {
+                transform: scale(1.5); /* Распространяется на всю карточку */
+                opacity: 0;
+            }
+        }
+        
+        /* Стили для 3D карточек */
+        .card-carousel {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 350px; /* Высота для карусели */
+            perspective: 1000px;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .card-container {
+            position: absolute;
+            width: 80%; /* Уменьшаем ширину для лучшего 3D эффекта */
+            max-width: 400px;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.5s ease-in-out;
+        }
+
+        .intro-card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2rem;
+            background: rgba(22, 27, 34, 0.4); /* Полупрозрачный фон */
+            border: 1px solid rgba(48, 54, 61, 0.3);
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #C9D1D9;
+            text-align: center;
+            font-size: 1.1rem;
+            opacity: 0.9;
+            transform: rotateY(var(--rotation-y)) rotateX(var(--rotation-x)) translateZ(var(--translate-z));
+            transition: transform 0.8s ease-in-out, opacity 0.5s ease-in-out;
+            animation: float 8s infinite ease-in-out alternate;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px) rotateX(2deg) rotateY(2deg); }
+            50% { transform: translateY(-10px) rotateX(-2deg) rotateY(-2deg); }
+            100% { transform: translateY(0px) rotateX(2deg) rotateY(2deg); }
+        }
+
+        .intro-card h3 {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2F81F7;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 10px rgba(47, 129, 247, 0.5);
+        }
+
+        .intro-card p {
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #B0B0B0;
+        }
+
+        .card-navigation {
+            position: absolute;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            padding: 0 1rem;
+        }
+
+        .nav-button {
+            background-color: rgba(47, 129, 247, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(5px);
+        }
+
+        .nav-button:hover {
+            background-color: rgba(47, 129, 247, 1);
+            transform: scale(1.1);
+        }
+
+        .nav-button:disabled {
+            background-color: rgba(100, 100, 100, 0.5);
+            cursor: not-allowed;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-dark': '#0D1117',
+                        'brand-surface': '#161B22',
+                        'brand-border': '#30363D',
+                        'brand-primary': '#2F81F7',
+                        'brand-primary-hover': '#58A6FF',
+                        'brand-secondary': '#8B949E',
+                        'brand-text': '#C9D1D9',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="antialiased">
+    <nav id="main-nav" class="sticky top-0 z-50 border-b border-brand-border/50">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="text-2xl font-bold text-white">Zeepy</div>
+                <div class="hidden md:flex items-center space-x-2">
+                    <a href="/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-home mr-2"></i>Главная</a>
+                    <a href="/dashboard/" class="px-3 py-2 rounded-md text-sm font-medium bg-gray-800 text-white"><i class="fas fa-gauge mr-2"></i>Кабинет</a>
+                    <a href="/my-scooters/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-motorcycle mr-2"></i>Мои самокаты</a>
+                    <a href="{% url 'buy_level' %}" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-bolt mr-2"></i>Купить уровень</a>
+                    <a href="/referral/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-users mr-2"></i>Рефералы</a>
+                    <a href="{% url 'history' %}" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-history mr-2"></i>История</a>
+                    <a href="/settings/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-cog mr-2"></i>Настройки</a>
+                    <a href="/about/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-info-circle mr-2"></i>О компании</a>
+                    <a href="/monitoring/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-map-marked-alt mr-2"></i>Мониторинг</a>
+                    <a href="/logout/" class="ml-4 px-4 py-2 rounded-md text-sm font-semibold bg-red-600 text-white hover:bg-red-700 transition-colors"><i class="fas fa-sign-out-alt mr-2"></i>Выйти</a>
+                </div>
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-brand-secondary hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+                        <span class="sr-only">Открыть главное меню</span>
+                        <svg id="icon-open" class="h-6 w-6 block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                        <svg id="icon-close" class="h-6 w-6 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="mobile-menu" class="md:hidden hidden bg-brand-surface/90 border-t border-brand-border">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                    <a href="/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-home mr-3 w-5 text-center"></i>Главная</a>
+                    <a href="/dashboard/" class="block px-3 py-2 rounded-md text-base font-medium bg-gray-800 text-white"><i class="fas fa-gauge mr-3 w-5 text-center"></i>Кабинет</a>
+                    <a href="/my-scooters/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-motorcycle mr-3 w-5 text-center"></i>Мои самокаты</a>
+                    <a href="{% url 'buy_level' %}" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-bolt mr-3 w-5 text-center"></i>Купить уровень</a>
+                    <a href="/referral/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-users mr-3 w-5 text-center"></i>Рефералы</a>
+                    <a href="{% url 'history' %}" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-history mr-3 w-5 text-center"></i>История</a>
+                    <a href="/settings/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-cog mr-3 w-5 text-center"></i>Настройки</a>
+                    <a href="/about/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-info-circle mr-3 w-5 text-center"></i>О компании</a>
+                    <a href="/monitoring/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-map-marked-alt mr-3 w-5 text-center"></i>Мониторинг</a>
+                    <a href="/logout/" class="block px-3 py-2 rounded-md text-base font-medium text-red-400 hover:bg-red-600 hover:text-white"><i class="fas fa-sign-out-alt mr-3 w-5 text-center"></i>Выйти</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-4 md:p-6 lg:p-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+            
+            <aside class="lg:col-span-1 space-y-6">
+                <div class="crystal-card p-6" data-aos="fade-right">
+                    <h2 class="text-xl font-bold text-white mb-1">Здравствуйте,</h2>
+                    <p class="text-brand-secondary truncate mb-4">{{ user.email }}</p>
+                    <div class="space-y-4">
+                        <div class="bg-brand-dark/70 p-4 rounded-md">
+                            <p class="text-sm text-brand-secondary mb-1">Текущий баланс</p>
+                            <p class="text-2xl font-bold text-white" id="balance-display">${{ profile.balance|default:"0.00"|floatformat:2 }}</p>
+                        </div>
+                        <div class="bg-brand-dark/70 p-4 rounded-md">
+                           <p class="text-sm text-brand-secondary mb-1">Текущий уровень</p>
+                           <p class="text-lg font-semibold text-brand-primary-hover">Level {{ highest_level }}</p>
+                        </div>
+                        <a href="{% url 'history' %}" class="w-full text-center block px-4 py-2 rounded-md text-sm font-semibold border border-brand-border text-brand-text hover:bg-brand-border transition-colors">История операций</a>
+                        <button id="withdraw-button" class="w-full text-center block px-4 py-2 rounded-md text-sm font-semibold bg-brand-primary text-white hover:bg-brand-primary-hover transition-colors">Вывести средства</button>
+                    </div>
+                </div>
+
+                <div class="crystal-card p-6" data-aos="fade-right" data-aos-delay="200">
+                    <h3 class="text-lg font-semibold text-white mb-2">Пригласите друга</h3>
+                    <p class="text-sm text-brand-secondary mb-4">Получайте бонусы, делясь своей реферальной ссылкой.</p>
+                    <div class="flex">
+                        <input type="text" id="ref-link-input" value="{{ referral_link }}" class="w-full bg-brand-dark/70 border border-brand-border rounded-l-md p-2 text-sm text-brand-text focus:outline-none" readonly>
+                        <button onclick="copyRefLink()" class="bg-brand-primary text-white px-4 rounded-r-md hover:bg-brand-primary-hover transition-colors text-sm font-bold">Копировать</button>
+                    </div>
+                    <div id="copy-success" class="text-green-400 text-xs mt-1 hidden">Ссылка скопирована!</div>
+                </div>
+            </aside>
+
+            <section class="lg:col-span-2 space-y-6">
+                <div class="card-carousel bg-brand-surface/20 rounded-xl p-4 relative" data-aos="fade-left" data-aos-delay="100">
+                    <div id="introCardContainer" class="card-container">
+                        <div class="intro-card" id="card-1">
+                            <div>
+                                <i class="fas fa-money-bill-wave text-5xl mb-4 text-brand-primary"></i>
+                                <h3>Зарабатывайте с Zeepy</h3>
+                                <p>Узнайте, как ваш баланс увеличивается в реальном времени благодаря вашим инвестициям в самокаты.</p>
+                            </div>
+                            <span class="text-xs text-brand-secondary mt-4">1 / 3</span>
+                        </div>
+                        <div class="intro-card hidden" id="card-2">
+                            <div>
+                                <i class="fas fa-route text-5xl mb-4 text-green-400"></i>
+                                <h3>Мониторинг в реальном времени</h3>
+                                <p>Следите за передвижениями ваших самокатов и их прибылью на интерактивной карте.</p>
+                            </div>
+                            <span class="text-xs text-brand-secondary mt-4">2 / 3</span>
+                        </div>
+                        <div class="intro-card hidden" id="card-3">
+                            <div>
+                                <i class="fas fa-handshake text-5xl mb-4 text-purple-400"></i>
+                                <h3>Партнерская программа</h3>
+                                <p>Приглашайте друзей и получайте дополнительные бонусы за каждого нового пользователя.</p>
+                            </div>
+                            <span class="text-xs text-brand-secondary mt-4">3 / 3</span>
+                        </div>
+                    </div>
+                    <div class="card-navigation">
+                        <button id="prevCard" class="nav-button"><i class="fas fa-chevron-left"></i></button>
+                        <button id="nextCard" class="nav-button"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+
+                <div class="crystal-card p-6 text-center" data-aos="fade-left" data-aos-delay="100">
+                    <h2 class="text-2xl font-bold text-white mb-3">Ваши самокаты уже работают!</h2>
+                    <p class="text-brand-secondary mb-5 max-w-2xl mx-auto">
+                        Загляните на страницу мониторинга, чтобы увидеть, как ваши инвестиции приносят доход в реальном времени. Следите за каждым самокатом на карте и наблюдайте за ростом баланса!
+                    </p>
+                    <a href="/monitoring/" class="radar-button inline-flex items-center px-6 py-3 rounded-md text-lg font-semibold bg-green-600 text-white hover:bg-green-700 transition-colors shadow-lg">
+                        <i class="fas fa-map-marked-alt mr-3"></i> Перейти к мониторингу
+                    </a>
+                </div>
+
+                <div class="crystal-card p-6" data-aos="fade-left" data-aos-delay="300">
+                    <h2 class="text-2xl font-bold text-white mb-2">Инвестиционные планы</h2>
+                    <p class="text-brand-secondary mb-6">Выберите подходящий уровень для старта или улучшения ваших инвестиций.</p>
+                    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                        {% for level in levels %}
+                            {% if level.number == 1 or level.number == 3 or level.number == 5 %}
+                            {% if level.number != 5 %}
+                            <div class="crystal-card p-5 flex flex-col" data-aos="zoom-in-up" data-aos-delay="{{ forloop.counter0|add:1 }}00">
+                                <div class="flex-grow">
+                                    <h4 class="text-xl font-bold text-center text-white mb-1">Level {{ level.number }}</h4>
+                                    <p class="text-sm text-brand-secondary text-center mb-4">{{ level.name|default:"Базовый" }}</p>
+                                    <div class="text-sm space-y-2 my-4">
+                                        <p><span class="font-semibold text-brand-secondary">Инвестиция:</span> <span class="font-bold text-white float-right">${{ level.price|floatformat:2 }}</span></p>
+                                        <p><span class="font-semibold text-brand-secondary">Доход в день:</span> <span class="font-bold text-green-400 float-right">${{ level.income|floatformat:2 }}</span></p>
+                                    </div>
+                                </div>
+                                <a href="{% url 'buy_level' %}" class="w-full mt-auto text-center block px-4 py-2 rounded-md text-sm font-semibold bg-brand-primary text-white hover:bg-brand-primary-hover transition-colors">Инвестировать</a>
+                            </div>
+                            {% endif %}
+
+                            {% if level.number == 5 %}
+                            <div class="crystal-card special-offer p-5 flex flex-col xl:col-span-1" data-aos="zoom-in-up" data-aos-delay="300">
+                                <div class="flex-grow">
+                                    <h4 class="text-xl font-bold text-center text-amber-300 mb-1">Level 5</h4>
+                                    <p class="text-sm text-brand-secondary text-center mb-4">{{ level.name|default:"Максимум" }}</p>
+                                    <div class="text-sm space-y-2 my-4">
+                                        <div class="flex justify-between items-baseline">
+                                            <span class="font-semibold text-brand-secondary">Инвестиция:</span>
+                                            <div>
+                                                <span class="old-price">$640.00</span>
+                                                <span class="font-bold text-white text-lg">${{ level.price|floatformat:2 }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="flex justify-between items-baseline">
+                                            <span class="font-semibold text-brand-secondary">Доход в день:</span>
+                                            <span class="font-bold text-green-400 text-lg">${{ level.income|floatformat:2 }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <a href="{% url 'buy_level' %}" class="w-full mt-auto text-center block px-4 py-2 rounded-md text-sm font-semibold bg-amber-500 text-white hover:bg-amber-400 transition-colors">Инвестировать</a>
+                            </div>
+                            {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+    
+    <div id="withdrawal-modal" class="modal-backdrop fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 pt-12 sm:pt-4 hidden opacity-0">
+        <div class="modal-content bg-brand-surface border border-brand-border rounded-lg shadow-xl w-full max-w-md mx-auto transform scale-95">
+            <div id="withdrawal-form-view">
+                <div class="p-6">
+                    <div class="flex justify-between items-start">
+                        <h2 class="text-2xl font-bold text-white">Вывод средств</h2>
+                        <button class="modal-close-button text-brand-secondary hover:text-white transition-colors text-2xl leading-none">&times;</button>
+                    </div>
+                    <div class="mt-4 text-brand-text">
+                        <form id="withdrawal-form">
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="wallet-address" class="block text-sm font-medium text-brand-text mb-2">Ваш кошелек USDT (TRC-20)</label>
+                                    <input type="text" name="wallet_address" id="wallet-address" placeholder="T..." required class="w-full bg-brand-dark border border-brand-border rounded-md p-3 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-primary">
+                                </div>
+                                <div>
+                                    <label for="amount" class="block text-sm font-medium text-brand-text mb-2">Сумма для вывода</label>
+                                    <input type="number" name="amount" id="amount" placeholder="Минимум $20" required step="0.01" class="w-full bg-brand-dark border border-brand-border rounded-md p-3 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-primary">
+                                </div>
+                            </div>
+                            <div class="mt-4 text-xs text-brand-secondary bg-brand-dark p-3 rounded-md border border-brand-border">
+                                <p>• Комиссия за вывод: <b>$5.00</b> (будет списана с баланса)</p>
+                                <p>• Минимальная сумма вывода: <b>$20.00</b></p>
+                                <p>• Вывод средств доступен <b>раз в 12 часов</b>.</p>
+                            </div>
+                            <div id="form-error" class="text-red-400 text-sm mt-4 hidden"></div>
+                            <div class="mt-6">
+                                <button type="submit" id="submit-withdrawal" class="w-full bg-brand-primary text-white font-bold py-3 px-4 rounded-md hover:bg-brand-primary-hover transition-colors">Отправить запрос</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div id="withdrawal-success-view" class="hidden">
+                    <div class="p-8 text-center">
+                    <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                        <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
+                        <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                    </svg>
+                    <h2 class="text-2xl font-bold text-white mt-4">Запрос отправлен!</h2>
+                    <p class="text-brand-secondary mt-2">Ваш запрос на вывод средств принят в обработку. Статус можно отследить в разделе "История".</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="container mx-auto text-center py-8 px-4 mt-8 border-t border-brand-border/50">
+        <p class="text-sm text-brand-secondary">&copy; 2025 Zeepy Inc. Все права защищены.</p>
+    </footer>
+    
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            AOS.init({
+                duration: 800,
+                once: true,
+            });
+
+            const body = document.body;
+            window.addEventListener('scroll', () => {
+                const scrollPercentage = window.scrollY / (body.scrollHeight - window.innerHeight);
+                body.style.backgroundPosition = `0% ${scrollPercentage * 100}%`;
+            });
+
+            const cards = document.querySelectorAll('.crystal-card');
+            cards.forEach(card => {
+                card.addEventListener('mousemove', e => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    card.style.setProperty('--mouse-x', `${x}px`);
+                    card.style.setProperty('--mouse-y', `${y}px`);
+                });
+            });
+
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const iconOpen = document.getElementById('icon-open');
+            const iconClose = document.getElementById('icon-close');
+
+            if (mobileMenuButton) {
+                mobileMenuButton.addEventListener('click', () => {
+                    const isMenuOpen = mobileMenu.classList.contains('menu-open');
+
+                    iconOpen.classList.toggle('hidden', !isMenuOpen);
+                    iconClose.classList.toggle('hidden', isMenuOpen);
+
+                    if (isMenuOpen) {
+                        mobileMenu.classList.remove('menu-open');
+                        mobileMenu.addEventListener('transitionend', (e) => {
+                            if (e.propertyName === 'transform') {
+                                mobileMenu.classList.add('hidden');
+                            }
+                        }, { once: true });
+                    } else {
+                        mobileMenu.classList.remove('hidden');
+                        setTimeout(() => {
+                            mobileMenu.classList.add('menu-open');
+                        }, 10);
+                    }
+                });
+            }
+
+            window.copyRefLink = function() {
+                const input = document.getElementById('ref-link-input');
+                input.select();
+                input.setSelectionRange(0, 99999);
+                try {
+                    document.execCommand('copy');
+                    const successMsg = document.getElementById('copy-success');
+                    successMsg.classList.remove('hidden');
+                    setTimeout(() => { successMsg.classList.add('hidden'); }, 2000);
+                } catch (err) {
+                    console.error('Не удалось скопировать текст: ', err);
+                }
+            }
+
+            const withdrawButton = document.getElementById('withdraw-button');
+            const modal = document.getElementById('withdrawal-modal');
+            const modalContent = modal.querySelector('.modal-content');
+            const closeButtons = modal.querySelectorAll('.modal-close-button');
+            const withdrawalForm = document.getElementById('withdrawal-form');
+            const formView = document.getElementById('withdrawal-form-view');
+            const successView = document.getElementById('withdrawal-success-view');
+            const balanceDisplay = document.getElementById('balance-display');
+            const formError = document.getElementById('form-error');
+
+            function showModal() {
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.style.opacity = '1';
+                    modalContent.style.transform = 'scale(1)';
+                }, 10);
+            }
+
+            function closeModal() {
+                modal.style.opacity = '0';
+                modalContent.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    formView.classList.remove('hidden');
+                    successView.classList.add('hidden');
+                    withdrawalForm.reset();
+                    formError.classList.add('hidden');
+                }, 300);
+            }
+            
+            if(withdrawButton) {
+                withdrawButton.addEventListener('click', showModal);
+            }
+            closeButtons.forEach(btn => btn.addEventListener('click', closeModal));
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+
+            withdrawalForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const submitButton = document.getElementById('submit-withdrawal');
+                submitButton.disabled = true;
+                submitButton.textContent = 'Обработка...';
+                formError.classList.add('hidden');
+                const formData = new FormData(this);
+                const data = {
+                    wallet_address: formData.get('wallet_address'),
+                    amount: formData.get('amount')
+                };
+                try {
+                    const response = await fetch('/api/create_withdrawal_request/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify(data)
+                    });
+                    const result = await response.json();
+                    if (!response.ok) {
+                        throw new Error(result.message || 'Произошла ошибка');
+                    }
+                    formView.classList.add('hidden');
+                    successView.classList.remove('hidden');
+                    if (balanceDisplay) {
+                        balanceDisplay.textContent = `$${parseFloat(result.new_balance).toFixed(2)}`;
+                    }
+                    const synth = new Tone.Synth().toDestination();
+                    Tone.start();
+                    synth.triggerAttackRelease("C5", "8n", Tone.now());
+                    synth.triggerAttackRelease("G5", "8n", Tone.now() + 0.2);
+                    setTimeout(closeModal, 4000);
+                } catch (error) {
+                    formError.textContent = error.message;
+                    formError.classList.remove('hidden');
+                } finally {
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Отправить запрос';
+                }
+            });
+
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+
+            // --- 3D Intro Cards Logic ---
+            const introCards = [
+                { id: 'card-1', title: 'Зарабатывайте с Zeepy', icon: 'fas fa-money-bill-wave', color: 'text-brand-primary', description: 'Узнайте, как ваш баланс увеличивается в реальном времени благодаря вашим инвестициям в самокаты.' },
+                { id: 'card-2', title: 'Мониторинг в реальном времени', icon: 'fas fa-route', color: 'text-green-400', description: 'Следите за передвижениями ваших самокатов и их прибылью на интерактивной карте.' },
+                { id: 'card-3', title: 'Партнерская программа', icon: 'fas fa-handshake', color: 'text-purple-400', description: 'Приглашайте друзей и получайте дополнительные бонусы за каждого нового пользователя.' }
+            ];
+            let currentCardIndex = 0;
+            const introCardContainer = document.getElementById('introCardContainer');
+            const prevCardBtn = document.getElementById('prevCard');
+            const nextCardBtn = document.getElementById('nextCard');
+
+            function updateCardDisplay() {
+                introCards.forEach((cardData, index) => {
+                    const cardElement = document.getElementById(cardData.id);
+                    if (cardElement) {
+                        if (index === currentCardIndex) {
+                            cardElement.classList.remove('hidden');
+                            cardElement.style.setProperty('--rotation-y', '0deg');
+                            cardElement.style.setProperty('--rotation-x', '0deg');
+                            cardElement.style.setProperty('--translate-z', '0px');
+                            cardElement.style.opacity = '0.9';
+                            cardElement.style.zIndex = '5';
+                        } else {
+                            cardElement.classList.add('hidden');
+                            cardElement.style.opacity = '0';
+                            cardElement.style.zIndex = '1';
+                        }
+                    }
+                });
+
+                prevCardBtn.disabled = currentCardIndex === 0;
+                nextCardBtn.disabled = currentCardIndex === introCards.length - 1;
+            }
+
+            prevCardBtn.addEventListener('click', () => {
+                if (currentCardIndex > 0) {
+                    currentCardIndex--;
+                    updateCardDisplay();
+                }
+            });
+
+            nextCardBtn.addEventListener('click', () => {
+                if (currentCardIndex < introCards.length - 1) {
+                    currentCardIndex++;
+                    updateCardDisplay();
+                }
+            });
+
+            // Initial display
+            updateCardDisplay();
+
+            // Set up initial 3D rotation and position for all cards (hidden)
+            introCards.forEach((cardData, index) => {
+                const cardElement = document.getElementById(cardData.id);
+                if (cardElement) {
+                    // Apply a subtle 3D tilt
+                    cardElement.style.setProperty('--rotation-y', `${(index - currentCardIndex) * 15}deg`); // Slight rotation for adjacent cards
+                    cardElement.style.setProperty('--rotation-x', '5deg');
+                    cardElement.style.setProperty('--translate-z', `${Math.abs(index - currentCardIndex) * -50}px`); // Push back
+                }
+            });
+        });
+    </script>
+</body>
+</html>

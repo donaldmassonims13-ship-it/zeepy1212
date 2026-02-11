@@ -1,0 +1,370 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>О компании — Zeepy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <style>
+        @keyframes animate-background {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 0% 100%; }
+            100% { background-position: 0% 0%; }
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: #C9D1D9;
+            background-color: #0D1117;
+            background-image: linear-gradient(180deg, #0D1117 0%, #111827 25%, #1D1B36 50%, #112F41 75%, #0D1117 100%);
+            background-size: 100% 400%;
+            background-attachment: fixed;
+            animation: animate-background 30s ease infinite;
+        }
+        
+        nav {
+            background-color: rgba(22, 27, 34, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        #mobile-menu {
+            transform-origin: top;
+            transform: scaleY(0);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        #mobile-menu.menu-open {
+            transform: scaleY(1);
+        }
+
+        .glass-card {
+            background: rgba(22, 27, 34, 0.65);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(88, 166, 255, 0.2);
+            border-radius: 1rem;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .glass-button {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .glass-button:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 15px rgba(88, 166, 255, 0.3);
+        }
+        .glass-button .crack-effect {
+            position: absolute;
+            top: -10%; left: -10%;
+            width: 120%; height: 120%;
+            background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg"><path d="M50 50 L 150 180 M180 80 L 250 250 L 350 220 M80 350 L 180 280 M20 200 L 150 210 M380 50 L 280 150" stroke="rgba(255,255,255,1)" stroke-width="1.2" fill="none" /></svg>');
+            background-size: 100% 100%;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+        }
+        .glass-button:active .crack-effect {
+            opacity: 0.3;
+            transition: opacity 0.1s ease;
+        }
+        .glass-button:active {
+            transform: scale(0.98);
+        }
+        
+        /* 🔥 НОВОЕ: Эффект "Аврора" для цифр */
+        @keyframes aurora-flow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .aurora-text-wrapper {
+            perspective: 800px;
+        }
+        .aurora-text {
+            font-size: 2.25rem; /* 36px */
+            line-height: 2.5rem; /* 40px */
+            font-weight: 800;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            background: linear-gradient(90deg, #58A6FF, #A371F7, #F761A1, #A371F7, #58A6FF);
+            background-size: 300% 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: aurora-flow 8s ease-in-out infinite;
+        }
+        .aurora-text-wrapper:hover .aurora-text {
+            transform: rotateY(360deg) scale(1.1);
+        }
+
+        /* 🔥 НОВОЕ: Временная шкала */
+        .timeline-container {
+            position: relative;
+            padding-left: 2.5rem; /* Отступ для линии */
+        }
+        .timeline-line {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background-color: #30363D; /* brand-border */
+            border-radius: 2px;
+        }
+        .timeline-progress {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 0; /* Изначально 0, будет меняться JS */
+            background: #2F81F7; /* brand-primary */
+            border-radius: 2px;
+            transition: height 0.3s ease-out;
+        }
+        .timeline-item {
+            position: relative;
+        }
+        .timeline-dot {
+            position: absolute;
+            left: -2.5rem; /* Выравниваем по центру линии */
+            top: 0;
+            transform: translateX(-50%) translateY(0.25rem);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #161B22; /* brand-surface */
+            border: 4px solid #30363D;
+            transition: border-color 0.3s ease;
+        }
+        .timeline-item.is-active .timeline-dot {
+            border-color: #2F81F7;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-dark': '#0D1117', 'brand-surface': '#161B22', 'brand-border': '#30363D',
+                        'brand-primary': '#2F81F7', 'brand-primary-hover': '#58A6FF',
+                        'brand-secondary': '#8B949E', 'brand-text': '#C9D1D9',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-brand-dark text-brand-text antialiased">
+    <nav class="sticky top-0 z-50 border-b border-brand-border/50">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="text-2xl font-bold text-white">Zeepy</div>
+                <div class="hidden md:flex items-center space-x-2">
+                    <a href="/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-home mr-2"></i>Главная</a>
+                    <a href="/dashboard/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-gauge mr-2"></i>Кабинет</a>
+                    <a href="/my-scooters/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-motorcycle mr-2"></i>Мои самокаты</a>
+                    <a href="{% url 'buy_level' %}" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-bolt mr-2"></i>Купить уровень</a>
+                    <a href="/referral/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-users mr-2"></i>Рефералы</a>
+                    <a href="{% url 'history' %}" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-history mr-2"></i>История</a>
+                    <a href="/settings/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-cog mr-2"></i>Настройки</a>
+                    <a href="/about/" class="px-3 py-2 rounded-md text-sm font-medium bg-gray-800 text-white"><i class="fas fa-info-circle mr-2"></i>О компании</a>
+                    <a href="/logout/" class="ml-4 px-4 py-2 rounded-md text-sm font-semibold bg-red-600 text-white hover:bg-red-700 transition-colors"><i class="fas fa-sign-out-alt mr-2"></i>Выйти</a>
+                </div>
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-brand-secondary hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+                        <span class="sr-only">Открыть главное меню</span>
+                        <svg id="icon-open" class="h-6 w-6 block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                        <svg id="icon-close" class="h-6 w-6 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="mobile-menu" class="md:hidden hidden bg-brand-surface/90 border-t border-brand-border">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-home mr-3 w-5 text-center"></i>Главная</a>
+                <a href="/dashboard/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-gauge mr-3 w-5 text-center"></i>Кабинет</a>
+                <a href="/my-scooters/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-motorcycle mr-3 w-5 text-center"></i>Мои самокаты</a>
+                <a href="{% url 'buy_level' %}" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-bolt mr-3 w-5 text-center"></i>Купить уровень</a>
+                <a href="/referral/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-users mr-3 w-5 text-center"></i>Рефералы</a>
+                <a href="{% url 'history' %}" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-history mr-3 w-5 text-center"></i>История</a>
+                <a href="/settings/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-cog mr-3 w-5 text-center"></i>Настройки</a>
+                <a href="/about/" class="block px-3 py-2 rounded-md text-base font-medium bg-gray-800 text-white"><i class="fas fa-info-circle mr-3 w-5 text-center"></i>О компании</a>
+                <a href="/logout/" class="block px-3 py-2 rounded-md text-base font-medium text-red-400 hover:bg-red-600 hover:text-white"><i class="fas fa-sign-out-alt mr-3 w-5 text-center"></i>Выйти</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-4 md:p-6 lg:p-8">
+        <div class="mb-8 md:mb-16 text-center" data-aos="fade-down">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-white">Наша история</h1>
+            <p class="mt-4 text-lg text-brand-secondary max-w-3xl mx-auto">Путь от смелой идеи до глобальной экосистемы, меняющей городскую мобильность и открывающей новые возможности для пассивного дохода.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+            <div class="lg:col-span-4">
+                <div class="sticky top-24 space-y-8">
+                    <div class="glass-card p-6 text-center crystal-text-wrapper" data-aos="fade-right">
+                        <p class="aurora-text" data-text="6+">6+</p>
+                        <p class="mt-2 text-brand-secondary">Лет на международном рынке</p>
+                    </div>
+                    <div class="glass-card p-6 text-center crystal-text-wrapper" data-aos="fade-right" data-aos-delay="100">
+                        <p class="aurora-text" data-text="10,000+">10,000+</p>
+                        <p class="mt-2 text-brand-secondary">Активных инвесторов по всему миру</p>
+                    </div>
+                    <div class="glass-card p-6 text-center crystal-text-wrapper" data-aos="fade-right" data-aos-delay="200">
+                        <p class="aurora-text" data-text="50,000+">50,000+</p>
+                        <p class="mt-2 text-brand-secondary">Самокатов в автопарке</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-8">
+                <div class="timeline-container" id="timeline">
+                    <div class="timeline-line"><div class="timeline-progress" id="timeline-progress"></div></div>
+                    
+                    <div class="timeline-item mb-12" data-aos="fade-left">
+                        <div class="timeline-dot"></div>
+                        <div class="glass-card p-6">
+                            <h3 class="text-xl font-bold text-white mb-2">Зарождение идеи</h3>
+                            <p class="text-brand-secondary leading-relaxed">Zeepy представляет собой замкнутую экосистему, где каждая инвестиция напрямую направляется на производство и запуск нового электросамоката.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item mb-12" data-aos="fade-left">
+                        <div class="timeline-dot"></div>
+                        <div class="glass-card p-6">
+                            <h3 class="text-xl font-bold text-white mb-2">Автоматизация и партнеры</h3>
+                            <p class="text-brand-secondary leading-relaxed">Весь процесс аренды полностью автоматизирован через популярные локальные приложения, такие как <b class="text-white">Alipay</b> и <b class="text-white">Didi</b>. Пользователи сканируют QR-код и оплачивают поездку.</p>
+                            <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                                <div class="glass-card p-3 rounded-lg"><p class="font-bold text-white text-sm">Alipay</p></div>
+                                <div class="glass-card p-3 rounded-lg"><p class="font-bold text-white text-sm">Didi</p></div>
+                                <div class="glass-card p-3 rounded-lg"><p class="font-bold text-white text-sm">CATL</p></div>
+                                <div class="glass-card p-3 rounded-lg"><p class="font-bold text-white text-sm">Huawei Cloud</p></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timeline-item mb-12" data-aos="fade-left">
+                        <div class="timeline-dot"></div>
+                        <div class="glass-card p-6">
+                             <h3 class="text-xl font-bold text-white mb-2">Пассивный доход</h3>
+                            <p class="text-brand-secondary leading-relaxed">Часть от каждой оплаты мгновенно зачисляется на ваш баланс. Мы берем на себя все операционные расходы: зарядку, техническое обслуживание, ремонт и логистику, обеспечивая вам чистый пассивный доход.</p>
+                        </div>
+                    </div>
+                     <div class="timeline-item" data-aos="fade-left">
+                        <div class="timeline-dot"></div>
+                        <div class="glass-card flex flex-col">
+                            <div class="p-6 md:p-8">
+                                <h2 class="text-xl font-bold text-white mb-2">Наш главный офис</h2>
+                                <p class="text-brand-secondary text-sm">Наш главный операционный центр расположен в сердце технологического хаба Азии: 18/F, Two IFC, 8 Century Avenue, Pudong, Shanghai, China</p>
+                                <div class="mt-4 pt-4 border-t border-brand-border/50 space-y-3">
+                                    <a href="{% static 'documents/sertificate.png' %}" download="Zeepy_Certificate.png" class="glass-button flex items-center justify-center text-white p-3 rounded-lg text-sm">
+                                        <span class="crack-effect"></span><i class="fas fa-file-arrow-down mr-2"></i><span>Certificate (EN)</span>
+                                    </a>
+                                    <a href="{% static 'documents/chsertificate.png' %}" download="Zeepy_License_ZH.png" class="glass-button flex items-center justify-center text-white p-3 rounded-lg text-sm">
+                                        <span class="crack-effect"></span><i class="fas fa-file-arrow-down mr-2"></i><span>Business License (ZH)</span>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="aspect-w-16 aspect-h-9 rounded-b-xl overflow-hidden mt-auto" data-parallax>
+                                <img src="{% static 'images/office.png' %}" alt="Фото офиса Zeepy" class="w-full h-full object-cover">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="container mx-auto text-center py-8 px-4 mt-8 border-t border-brand-border/50">
+        <p class="text-sm text-brand-secondary">&copy; 2025 Zeepy Inc. Все права защищены.</p>
+    </footer>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            AOS.init({ duration: 800, once: true, offset: 50 });
+
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            if (mobileMenuButton) {
+                mobileMenuButton.addEventListener('click', () => {
+                    const isMenuOpen = mobileMenu.classList.contains('menu-open');
+                    document.getElementById('icon-open').classList.toggle('hidden', !isMenuOpen);
+                    document.getElementById('icon-close').classList.toggle('hidden', isMenuOpen);
+                    if (isMenuOpen) {
+                        mobileMenu.classList.remove('menu-open');
+                        mobileMenu.addEventListener('transitionend', e => {
+                            if (e.propertyName === 'transform') mobileMenu.classList.add('hidden');
+                        }, { once: true });
+                    } else {
+                        mobileMenu.classList.remove('hidden');
+                        setTimeout(() => mobileMenu.classList.add('menu-open'), 10);
+                    }
+                });
+            }
+            
+            // 🔥 НОВОЕ: Логика для параллакса и временной шкалы
+            const timeline = document.getElementById('timeline');
+            const timelineProgress = document.getElementById('timeline-progress');
+            const timelineItems = document.querySelectorAll('.timeline-item');
+            const parallaxImage = document.querySelector('[data-parallax] img');
+
+            function handleScroll() {
+                const scrollY = window.scrollY;
+                const windowHeight = window.innerHeight;
+                
+                // Анимация фона
+                const scrollPercentage = scrollY / (document.body.scrollHeight - windowHeight);
+                if (!isNaN(scrollPercentage)) {
+                    document.body.style.backgroundPosition = `0% ${scrollPercentage * 100}%`;
+                }
+
+                // Анимация временной шкалы
+                if (timeline) {
+                    const timelineRect = timeline.getBoundingClientRect();
+                    const startPoint = timelineRect.top + scrollY;
+                    const endPoint = timelineRect.bottom + scrollY - windowHeight;
+                    
+                    let progress = (scrollY - startPoint) / (endPoint - startPoint + windowHeight/2);
+                    progress = Math.max(0, Math.min(1, progress));
+                    timelineProgress.style.height = `${progress * 100}%`;
+
+                    timelineItems.forEach(item => {
+                        const itemRect = item.getBoundingClientRect();
+                        if (itemRect.top < windowHeight * 0.6) {
+                            item.classList.add('is-active');
+                        } else {
+                            item.classList.remove('is-active');
+                        }
+                    });
+                }
+                
+                // Эффект параллакса для изображения
+                if (parallaxImage) {
+                    const imageRect = parallaxImage.parentElement.getBoundingClientRect();
+                    const isVisible = imageRect.top < windowHeight && imageRect.bottom > 0;
+                    if (isVisible) {
+                        const speed = -0.2;
+                        const movement = (imageRect.top - windowHeight / 2) * speed;
+                        parallaxImage.style.transform = `translateY(${movement}px)`;
+                    }
+                }
+            }
+            
+            window.addEventListener('scroll', handleScroll);
+            handleScroll(); // Вызываем один раз при загрузке
+        });
+    </script>
+</body>
+</html>

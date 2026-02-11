@@ -1,0 +1,356 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мониторинг — Zeepy</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.1/dist/MarkerCluster.Default.css" /> 
+    
+    <style>
+        /* Увеличенная скорость анимации фона */
+        @keyframes animate-background {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 0% 100%; }
+            100% { background-position: 0% 0%; }
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: #C9D1D9;
+            background-color: #0D1117;
+            background-image: linear-gradient(180deg, #0D1117 0%, #111827 25%, #1D1B36 50%, #112F41 75%, #0D1117 100%);
+            background-size: 100% 400%;
+            background-attachment: fixed;
+            animation: animate-background 15s ease infinite; /* Уменьшено с 30s до 15s */
+        }
+        
+        nav {
+            background-color: rgba(22, 27, 34, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        #mobile-menu {
+            transform-origin: top;
+            transform: scaleY(0);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        #mobile-menu.menu-open {
+            transform: scaleY(1);
+        }
+
+        .glass-card {
+            background: rgba(22, 27, 34, 0.65);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(88, 166, 255, 0.2);
+            border-radius: 1rem;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .glass-input {
+            background: rgba(22, 27, 34, 0.6);
+            border: 1px solid rgba(88, 166, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #C9D1D9;
+        }
+        .glass-input:focus {
+            border-color: #2F81F7;
+            box-shadow: 0 0 0 2px rgba(47, 129, 247, 0.5);
+        }
+
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip { 
+            background: rgba(22, 27, 34, 0.8); /* Более прозрачный для попапа */
+            color: #C9D1D9; 
+            border: 1px solid rgba(88, 166, 255, 0.3); /* Ярче граница */
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5); /* Более выраженная тень */
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 0.75rem; /* Закругленные углы */
+        }
+        .leaflet-div-icon { background: transparent; border: none; }
+        .pulsating-dot { position: relative; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; }
+        .pulsating-dot::before { content: ''; position: relative; width: 100%; height: 100%; border-radius: 50%; z-index: 1; transition: background-color 0.3s ease; }
+        .pulsating-dot::after { content: ''; position: absolute; width: 100%; height: 100%; border-radius: 50%; z-index: 0; animation: pulsate 2s ease-out infinite; }
+        @keyframes pulsate { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(2.5); opacity: 0; } }
+        .status-active::before, .status-active::after { background-color: #28a745; box-shadow: 0 0 8px rgba(40, 167, 69, 0.8); }
+        .status-idle::before, .status-idle::after { background-color: #ffc107; box-shadow: 0 0 8px rgba(255, 193, 7, 0.8); }
+        /* Анимация для всплывающей панели */
+        #info-banner { 
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease; 
+            background: rgba(22, 27, 34, 0.7); /* Фон баннера */
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(88, 166, 255, 0.2);
+        }
+        #info-banner.hidden {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+
+        /* Улучшение стилей для карты Leaflet */
+        #map {
+            border-radius: 1rem; /* Соответствует glass-card */
+            overflow: hidden; /* Важно для применения border-radius */
+            border: 1px solid rgba(88, 166, 255, 0.2); /* Единый стиль границ */
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4); /* Тени */
+        }
+        .leaflet-control-zoom, .leaflet-control-attribution {
+            background-color: rgba(22, 27, 34, 0.7) !important;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            color: #C9D1D9 !important;
+            border: 1px solid rgba(88, 166, 255, 0.2) !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+        }
+        .leaflet-control-zoom a {
+            color: #C9D1D9 !important;
+            background: transparent !important;
+        }
+        .leaflet-control-zoom a:hover {
+            background-color: rgba(88, 166, 255, 0.1) !important;
+            color: #FFFFFF !important;
+        }
+
+        /* Стиль для Flip-карточки */
+        .flip-card {
+            background-color: transparent;
+            width: 100%;
+            height: 200px; /* Фиксированная высота для примера */
+            perspective: 1000px; /* Обеспечивает 3D эффект */
+            cursor: pointer;
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.8s;
+            transform-style: preserve-3d;
+            border-radius: 1rem; /* Соответствует glass-card */
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3); /* Общая тень для всей карточки */
+        }
+
+        .flip-card:hover .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden; /* Скрывает обратную сторону во время переворота */
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+            border-radius: 1rem; /* Соответствует glass-card */
+            border: 1px solid rgba(88, 166, 255, 0.2); /* Граница для обеих сторон */
+        }
+
+        .flip-card-front {
+            background: rgba(22, 27, 34, 0.65);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            color: #C9D1D9;
+        }
+
+        .flip-card-back {
+            background: rgba(17, 24, 39, 0.65); /* Немного другой оттенок для задней стороны */
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            color: #C9D1D9;
+            transform: rotateY(180deg);
+        }
+
+        /* Дополнительные эффекты для текста в карточках, как "аврора" */
+        .aurora-text-small {
+            font-size: 1.5rem; /* 24px */
+            line-height: 1.75rem; /* 28px */
+            font-weight: 700;
+            position: relative;
+            background: linear-gradient(90deg, #58A6FF, #A371F7, #F761A1, #A371F7, #58A6FF);
+            background-size: 300% 100%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: aurora-flow 8s ease-in-out infinite;
+        }
+
+        @keyframes aurora-flow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+    </style>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-dark': '#0D1117', 'brand-surface': '#161B22', 'brand-border': '#30363D',
+                        'brand-primary': '#2F81F7', 'brand-primary-hover': '#58A6FF',
+                        'brand-secondary': '#8B949E', 'brand-text': '#C9D1D9',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-brand-dark text-brand-text antialiased">
+
+    <nav class="sticky top-0 z-50 border-b border-brand-border/50">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="text-2xl font-bold text-white">Zeepy</div>
+                <div class="hidden lg:flex items-center space-x-2">
+                    <a href="/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-home mr-2"></i>Главная</a>
+                    <a href="/dashboard/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-gauge mr-2"></i>Кабинет</a>
+                    <a href="{% url 'monitoring' %}" class="px-3 py-2 rounded-md text-sm font-medium bg-gray-800 text-white"><i class="fa-solid fa-map-location-dot mr-2"></i>Мониторинг</a>
+                    <a href="/my-scooters/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-motorcycle mr-2"></i>Мои самокаты</a>
+                    <a href="{% url 'buy_level' %}" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-bolt mr-2"></i>Купить уровень</a>
+                    <a href="{% url 'history' %}" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-history mr-2"></i>История</a>
+                    <a href="/logout/" class="ml-4 px-4 py-2 rounded-md text-sm font-semibold bg-red-600 text-white hover:bg-red-700 transition-colors"><i class="fas fa-sign-out-alt mr-2"></i>Выйти</a>
+                </div>
+                <div class="lg:hidden flex items-center">
+                    <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-brand-secondary hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+                        <span class="sr-only">Открыть главное меню</span>
+                        <svg id="icon-open" class="h-6 w-6 block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                        <svg id="icon-close" class="h-6 w-6 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-surface/90 border-t border-brand-border">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-home mr-3 w-5 text-center"></i>Главная</a>
+                <a href="/dashboard/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-gauge mr-3 w-5 text-center"></i>Кабинет</a>
+                <a href="{% url 'monitoring' %}" class="block px-3 py-2 rounded-md text-base font-medium bg-gray-800 text-white"><i class="fa-solid fa-map-location-dot mr-3 w-5 text-center"></i>Мониторинг</a>
+                <a href="/my-scooters/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-motorcycle mr-3 w-5 text-center"></i>Мои самокаты</a>
+                <a href="{% url 'buy_level' %}" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-bolt mr-3 w-5 text-center"></i>Купить уровень</a>
+                <a href="{% url 'history' %}" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-history mr-3 w-5 text-center"></i>История</a>
+                <a href="/logout/" class="block px-3 py-2 rounded-md text-base font-medium text-red-400 hover:bg-red-600 hover:text-white"><i class="fas fa-sign-out-alt mr-3 w-5 text-center"></i>Выйти</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-4 md:p-6 lg:p-8">
+        <div class="mb-6">
+            <h1 class="text-3xl md:text-4xl font-bold text-white"><i class="fa-solid fa-map-location-dot text-brand-primary mr-3"></i>Мониторинг оборудования</h1>
+            <p class="mt-2 text-lg text-brand-secondary">Отслеживайте все ваши самокаты в реальном времени.</p>
+        </div>
+
+        <div class="glass-card p-4 mb-6 flex flex-col sm:flex-row items-center gap-4">
+            <div class="relative w-full sm:w-1/2">
+                <i class="fas fa-search text-brand-secondary absolute left-3 top-1/2 -translate-y-1/2"></i>
+                <input type="text" id="search-input" placeholder="Поиск по ID (например, 25)" class="glass-input w-full rounded-md pl-10 pr-4 py-2">
+            </div>
+            <div class="relative w-full sm:w-1/2">
+                <i class="fas fa-filter text-brand-secondary absolute left-3 top-1/2 -translate-y-1/2"></i>
+                <select id="status-filter" class="glass-input w-full appearance-none rounded-md pl-10 pr-8 py-2">
+                    <option value="all">Все статусы</option>
+                    <option value="active">В движении</option>
+                    <option value="idle">Свободен</option>
+                </select>
+                <i class="fas fa-chevron-down text-brand-secondary absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+            </div>
+        </div>
+
+        <div id="map" style="height: 65vh;"></div>
+
+        <section class="mt-12 mb-24 flex justify-center items-center">
+            <div class="flip-card w-full max-w-xl">
+                <div class="flip-card-inner">
+                    <div class="flip-card-front">
+                        <i class="fas fa-cubes text-brand-primary text-5xl mb-4"></i>
+                        <h3 class="aurora-text-small">Наши Технологии</h3>
+                        <p class="text-brand-secondary mt-2 text-center text-sm">
+                            Инновации, которые движут Zeepy вперёд. Узнайте о наших передовых решениях.
+                        </p>
+                    </div>
+                    <div class="flip-card-back">
+                        <h3 class="aurora-text-small mb-2">Облачные решения и AI</h3>
+                        <p class="text-brand-secondary text-center text-sm">
+                            Мы используем <strong class="text-white">Huawei Cloud</strong> для масштабируемости и <strong class="text-white">ИИ</strong> для оптимизации маршрутов и прогнозирования спроса. Это обеспечивает максимальную эффективность и ваш стабильный доход.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        </main>
+
+    <div id="info-banner" class="fixed bottom-0 left-0 right-0 p-4 shadow-lg z-50">
+        <div class="container mx-auto flex items-center justify-between">
+            <div>
+                <h4 class="font-bold text-white"><i class="fas fa-info-circle mr-2 text-brand-primary"></i>Как это работает?</h4>
+                <p class="text-sm text-brand-secondary mt-1">
+                    Каждый самокат в среднем совершает <strong class="text-white">9-16 поездок</strong> в день, проезжая от <strong class="text-white">22 до 70 км</strong>. 
+                    После этого он отправляется на подзарядку и снова готов к работе, принося вам доход.
+                </p>
+            </div>
+            <button id="close-banner-btn" class="text-brand-secondary hover:text-white transition-colors text-2xl">&times;</button>
+        </div>
+    </div>
+
+    <footer class="container mx-auto text-center py-8 px-4 mt-8 border-t border-brand-border/50 mb-24"> 
+        <p class="text-sm text-brand-secondary">&copy; {% now "Y" %} Zeepy Inc. Все права защищены.</p>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.1/dist/leaflet.markercluster.js"></script>
+
+    <script>
+        window.userScooterCount = {{ user_scooter_count|default:0 }};
+    </script>
+    <script src="{% static 'js/monitoring.js' %}"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Mobile menu toggle logic
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            if (mobileMenuButton) {
+                mobileMenuButton.addEventListener('click', () => {
+                    const isMenuOpen = mobileMenu.classList.contains('menu-open');
+                    document.getElementById('icon-open').classList.toggle('hidden', !isMenuOpen);
+                    document.getElementById('icon-close').classList.toggle('hidden', isMenuOpen);
+                    if (isMenuOpen) {
+                        mobileMenu.classList.remove('menu-open');
+                        mobileMenu.addEventListener('transitionend', e => {
+                            if (e.propertyName === 'transform') mobileMenu.classList.add('hidden');
+                        }, { once: true });
+                    } else {
+                        mobileMenu.classList.remove('hidden');
+                        setTimeout(() => mobileMenu.classList.add('menu-open'), 10);
+                    }
+                });
+            }
+
+            // Info banner close logic
+            const closeBannerBtn = document.getElementById('close-banner-btn');
+            const infoBanner = document.getElementById('info-banner');
+
+            if (closeBannerBtn && infoBanner) {
+                closeBannerBtn.addEventListener('click', () => {
+                    infoBanner.classList.add('hidden');
+                });
+            }
+        });
+    </script>
+</body>
+</html>

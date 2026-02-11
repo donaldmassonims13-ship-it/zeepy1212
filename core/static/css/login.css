@@ -1,0 +1,30 @@
+body {
+  background-color: #101820;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.register-container {
+  background: #1b1f24;
+  padding: 40px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+input, button {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border: none;
+  border-radius: 5px;
+}
+
+button {
+  background-color: #00ffc3;
+  color: black;
+  font-weight: bold;
+}

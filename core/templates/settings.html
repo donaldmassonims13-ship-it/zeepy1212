@@ -1,0 +1,275 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройки — Zeepy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <style>
+        @keyframes animate-background {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 0% 100%; }
+            100% { background-position: 0% 0%; }
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: #C9D1D9;
+            background-color: #0D1117;
+            background-image: linear-gradient(180deg, #0D1117 0%, #111827 25%, #1D1B36 50%, #112F41 75%, #0D1117 100%);
+            background-size: 100% 400%;
+            background-attachment: fixed;
+            animation: animate-background 30s ease infinite;
+        }
+        
+        nav {
+            background-color: rgba(22, 27, 34, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        #mobile-menu {
+            transform-origin: top;
+            transform: scaleY(0);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        #mobile-menu.menu-open {
+            transform: scaleY(1);
+        }
+
+        /* 🔥 НОВОЕ: Стили для "стеклянных" элементов */
+        .glass-card {
+            background: rgba(22, 27, 34, 0.65);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(88, 166, 255, 0.2);
+            border-radius: 1rem;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .glass-input {
+            background: rgba(13, 17, 23, 0.5); /* brand-dark/50 */
+            border: 1px solid #30363D; /* brand-border */
+            transition: all 0.2s ease-in-out;
+        }
+        .glass-input:focus {
+            background: rgba(13, 17, 23, 0.7);
+            border-color: #2F81F7; /* brand-primary */
+            box-shadow: 0 0 0 2px rgba(47, 129, 247, 0.5);
+        }
+
+        .glass-button {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background-color: rgba(47, 129, 247, 0.8); /* brand-primary/80 */
+        }
+        .glass-button:hover {
+            background-color: rgba(88, 166, 255, 0.9); /* brand-primary-hover/90 */
+            box-shadow: 0 0 20px rgba(88, 166, 255, 0.5);
+        }
+        .glass-button .crack-effect {
+            position: absolute;
+            top: -10%; left: -10%;
+            width: 120%; height: 120%;
+            background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg"><path d="M50 50 L 150 180 M180 80 L 250 250 L 350 220 M80 350 L 180 280 M20 200 L 150 210 M380 50 L 280 150" stroke="rgba(255,255,255,1)" stroke-width="1.2" fill="none" /></svg>');
+            background-size: 100% 100%;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+        }
+        .glass-button:active .crack-effect {
+            opacity: 0.3;
+            transition: opacity 0.1s ease;
+        }
+        .glass-button:active {
+            transform: scale(0.98);
+        }
+        
+        /* Стили для Django форм, чтобы они стали "стеклянными" */
+        form p {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        form label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #8B949E; /* brand-secondary */
+        }
+        form input {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+        }
+        form .helptext {
+            font-size: 0.75rem;
+            color: #8B949E;
+            margin-top: -0.25rem;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-dark': '#0D1117', 'brand-surface': '#161B22', 'brand-border': '#30363D',
+                        'brand-primary': '#2F81F7', 'brand-primary-hover': '#58A6FF',
+                        'brand-secondary': '#8B949E', 'brand-text': '#C9D1D9',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-brand-dark text-brand-text antialiased">
+    <nav class="sticky top-0 z-50 border-b border-brand-border/50">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="text-2xl font-bold text-white">Zeepy</div>
+                <div class="hidden md:flex items-center space-x-2">
+                     <a href="/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-home mr-2"></i>Главная</a>
+                     <a href="/dashboard/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-gauge mr-2"></i>Кабинет</a>
+                     <a href="/my-scooters/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-motorcycle mr-2"></i>Мои самокаты</a>
+                     <a href="{% url 'buy_level' %}" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-bolt mr-2"></i>Купить уровень</a>
+                     <a href="/referral/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-users mr-2"></i>Рефералы</a>
+                     <a href="{% url 'history' %}" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-history mr-2"></i>История</a>
+                     <a href="/settings/" class="px-3 py-2 rounded-md text-sm font-medium bg-gray-800 text-white"><i class="fas fa-cog mr-2"></i>Настройки</a>
+                     <a href="/about/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-info-circle mr-2"></i>О компании</a>
+                     <a href="/logout/" class="ml-4 px-4 py-2 rounded-md text-sm font-semibold bg-red-600 text-white hover:bg-red-700 transition-colors"><i class="fas fa-sign-out-alt mr-2"></i>Выйти</a>
+                </div>
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-brand-secondary hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+                        <span class="sr-only">Открыть главное меню</span>
+                        <svg id="icon-open" class="h-6 w-6 block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                        <svg id="icon-close" class="h-6 w-6 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="mobile-menu" class="md:hidden hidden bg-brand-surface/90 border-t border-brand-border">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                 <a href="/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-home mr-3 w-5 text-center"></i>Главная</a>
+                 <a href="/dashboard/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-gauge mr-3 w-5 text-center"></i>Кабинет</a>
+                 <a href="/my-scooters/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-motorcycle mr-3 w-5 text-center"></i>Мои самокаты</a>
+                 <a href="{% url 'buy_level' %}" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-bolt mr-3 w-5 text-center"></i>Купить уровень</a>
+                 <a href="/referral/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-users mr-3 w-5 text-center"></i>Рефералы</a>
+                 <a href="{% url 'history' %}" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-history mr-3 w-5 text-center"></i>История</a>
+                 <a href="/settings/" class="block px-3 py-2 rounded-md text-base font-medium bg-gray-800 text-white"><i class="fas fa-cog mr-3 w-5 text-center"></i>Настройки</a>
+                 <a href="/about/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-info-circle mr-3 w-5 text-center"></i>О компании</a>
+                 <a href="/logout/" class="block px-3 py-2 rounded-md text-base font-medium text-red-400 hover:bg-red-600 hover:text-white"><i class="fas fa-sign-out-alt mr-3 w-5 text-center"></i>Выйти</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-4 md:p-6 lg:p-8">
+        <div class="mb-8 md:mb-12" data-aos="fade-down">
+            <h1 class="text-3xl md:text-4xl font-bold text-white">Настройки профиля</h1>
+            <p class="mt-2 text-lg text-brand-secondary">Управляйте вашими данными и настройками безопасности.</p>
+        </div>
+
+        {% if messages %}
+            <div class="mb-6" data-aos="fade-up">
+                {% for message in messages %}
+                <div class="glass-card p-4 text-sm {% if message.tags == 'success' %}border-green-500/50 text-green-300{% else %}border-red-500/50 text-red-300{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 space-y-8">
+                <div class="glass-card" data-aos="fade-up" data-aos-delay="100">
+                    <div class="p-6 border-b border-brand-border/50">
+                        <h2 class="text-xl font-semibold text-white">Безопасность</h2>
+                        <p class="text-sm text-brand-secondary mt-1">Измените ваш пароль для защиты аккаунта.</p>
+                    </div>
+                    <form method="POST" class="p-6">
+                        {% csrf_token %}
+                        <div class="space-y-4">
+                            {{ password_form.as_p }}
+                        </div>
+                        <div class="mt-6">
+                            <button type="submit" name="change_password" class="glass-button text-white font-semibold py-2 px-4 rounded-md text-sm">
+                                <span class="crack-effect"></span>
+                                Сменить пароль
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="lg:col-span-1" data-aos="fade-up" data-aos-delay="200">
+                <div class="glass-card">
+                    <div class="p-6 border-b border-brand-border/50">
+                        <h2 class="text-xl font-semibold text-white">Ваши данные</h2>
+                        <p class="text-sm text-brand-secondary mt-1">Ваш email используется для входа.</p>
+                    </div>
+                    <div class="p-6 space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-brand-secondary">Email</label>
+                            <p class="text-brand-text font-semibold mt-1">{{ user.email }}</p>
+                        </div>
+                        <form method="POST">
+                            {% csrf_token %}
+                            <div class="space-y-4">
+                                {{ profile_form.as_p }}
+                            </div>
+                            <div class="mt-6">
+                                <button type="submit" name="update_profile" class="glass-button text-white font-semibold py-2 px-4 rounded-md text-sm">
+                                    <span class="crack-effect"></span>
+                                    Сохранить данные
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="container mx-auto text-center py-8 px-4 mt-8 border-t border-brand-border/50">
+        <p class="text-sm text-brand-secondary">&copy; 2025 Zeepy Inc. Все права защищены.</p>
+    </footer>
+    
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            AOS.init({ duration: 800, once: true });
+
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            if (mobileMenuButton) {
+                mobileMenuButton.addEventListener('click', () => {
+                    const isMenuOpen = mobileMenu.classList.contains('menu-open');
+                    document.getElementById('icon-open').classList.toggle('hidden', !isMenuOpen);
+                    document.getElementById('icon-close').classList.toggle('hidden', isMenuOpen);
+                    if (isMenuOpen) {
+                        mobileMenu.classList.remove('menu-open');
+                        mobileMenu.addEventListener('transitionend', e => {
+                            if (e.propertyName === 'transform') mobileMenu.classList.add('hidden');
+                        }, { once: true });
+                    } else {
+                        mobileMenu.classList.remove('hidden');
+                        setTimeout(() => mobileMenu.classList.add('menu-open'), 10);
+                    }
+                });
+            }
+            
+            // 🔥 НОВОЕ: Применяем стили к полям ввода Django
+            document.querySelectorAll('form input[type="text"], form input[type="password"], form input[type="email"], form input[type="url"]').forEach(input => {
+                input.classList.add('glass-input');
+            });
+        });
+    </script>
+</body>
+</html>

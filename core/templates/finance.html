@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Финансовый центр — Zeepy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Orbitron', sans-serif;
+      background-color: #0a0f12;
+      color: #00ffc3;
+      overflow-x: hidden;
+    }
+    nav {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 15px 0;
+      background-color: #0d141a;
+      box-shadow: 0 4px 8px rgba(0, 255, 195, 0.2);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    nav a {
+      margin: 0 10px;
+      padding: 10px 20px;
+      color: #00ffc3;
+      text-decoration: none;
+      font-weight: bold;
+      background-color: #111;
+      border: 1px solid #00ffc3;
+      border-radius: 8px;
+      transition: all 0.3s;
+    }
+    nav a:hover {
+      background-color: #00ffc3;
+      color: #000;
+    }
+    .container {
+      max-width: 800px;
+      margin: 50px auto;
+      background: #101820;
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 0 25px #00ffc3;
+      text-align: center;
+    }
+    .container h2 {
+      margin-bottom: 30px;
+      font-size: 28px;
+      text-shadow: 0 0 15px #00ffc3;
+    }
+    .transaction-box {
+      background: #0e161d;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      color: #e0ffff;
+      border: 1px solid #00ffc3;
+      text-align: left;
+    }
+    .transaction-box strong {
+      color: #00ffc3;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/">Главная</a>
+    <a href="/buy">Купить оборудование</a>
+    <a href="/equipment">Моё оборудование</a>
+    <a href="/profile">Профиль</a>
+    <a href="/finance">Финансы</a>
+    <a href="/logout">Выйти</a>
+  </nav>
+
+  <div class="container">
+    <h2>Финансовый центр</h2>
+
+    {% for tx in transactions %}
+    <div class="transaction-box">
+      <div><strong>Тип:</strong> {{ tx.type }}</div>
+      <div><strong>Сумма:</strong> ${{ tx.amount }}</div>
+      <div><strong>Дата:</strong> {{ tx.created_at|date:"d.m.Y H:i" }}</div>
+    </div>
+    {% empty %}
+    <p style="color: #ccc;">Транзакции не найдены.</p>
+    {% endfor %}
+  </div>
+</body>
+</html>

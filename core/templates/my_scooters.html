@@ -1,0 +1,642 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zeepy — Мой автопарк</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
+
+
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif;
+            color: #C9D1D9;
+            background-color: #0D1117;
+            background-image: linear-gradient(
+                180deg,
+                #0D1117 0%,
+                #111827 25%,
+                #1D1B36 50%,
+                #112F41 75%,
+                #0D1117 100%
+            );
+            background-size: 100% 400%;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            transition: background-position 0.5s ease-out;
+        }
+        
+        nav {
+            background-color: rgba(22, 27, 34, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        #mobile-menu {
+            transform-origin: top;
+            transform: scaleY(0);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        #mobile-menu.menu-open {
+            transform: scaleY(1);
+        }
+
+        .glass-card {
+            background: rgba(22, 27, 34, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.75rem;
+        }
+
+        .glass-button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 700;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: all 0.2s ease-in-out;
+        }
+        .glass-button:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        .glass-button:active {
+            transform: translateY(0);
+        }
+        .glass-button.green {
+            box-shadow: inset 0 0 20px rgba(74, 222, 128, 0.2);
+        }
+        .glass-button.blue {
+            box-shadow: inset 0 0 20px rgba(96, 165, 250, 0.2);
+        }
+        .glass-button:disabled {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: #8B949E;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .report-item {
+            cursor: pointer;
+            transition: all 0.3s ease-out;
+        }
+        .report-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out, margin-top 0.4s ease-out;
+        }
+        .report-item.is-expanded {
+            transform: scale(1.02);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .report-item.is-expanded .report-details {
+            max-height: 100px;
+            margin-top: 1rem;
+        }
+
+        .modal-backdrop { background-color: rgba(0, 0, 0, 0.75); transition: opacity 0.3s ease-in-out; }
+        .modal-content { transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out; }
+        .modal-backdrop.hidden { display: none; }
+        @keyframes pulse-animation { 50% { transform: scale(1.1); box-shadow: 0 0 15px #28a745; } }
+        .pulsing-icon { animation: pulse-animation 2s infinite; }
+        @keyframes wheel-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes scooter-move { from { left: -16px; } to { left: calc(100% - 48px); } }
+        @keyframes progress-fill-animation { from { width: 0%; } to { width: 100%; } }
+        .is-animating #scooter-svg-container { animation: scooter-move 5s linear infinite; }
+        .is-animating .wheel { animation: wheel-spin 0.8s linear infinite; }
+        .is-animating #progress-fill-bar { animation: progress-fill-animation 5s linear infinite; }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-dark': '#0D1117', 'brand-surface': '#161B22', 'brand-border': '#30363D',
+                        'brand-primary': '#2F81F7', 'brand-primary-hover': '#58A6FF',
+                        'brand-secondary': '#8B949E', 'brand-text': '#C9D1D9',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="antialiased">
+    <nav class="sticky top-0 z-50 border-b border-brand-border/50">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="text-2xl font-bold text-white">Zeepy</div>
+                <div class="hidden md:flex items-center space-x-2">
+                    <a href="/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-home mr-2"></i>Главная</a>
+                    <a href="/dashboard/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-gauge mr-2"></i>Кабинет</a>
+                    <a href="/my-scooters/" class="px-3 py-2 rounded-md text-sm font-medium bg-gray-800 text-white"><i class="fas fa-motorcycle mr-2"></i>Мои самокаты</a>
+                    <a href="{% url 'buy_level' %}" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-bolt mr-2"></i>Купить уровень</a>
+                    <a href="/referral/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-users mr-2"></i>Рефералы</a>
+                    <a href="{% url 'history' %}" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-history mr-2"></i>История</a>
+                    <a href="/settings/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-cog mr-2"></i>Настройки</a>
+                    <a href="/about/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-info-circle mr-2"></i>О компании</a>
+                    <a href="/monitoring/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-map-marked-alt mr-2"></i>Мониторинг</a>
+                    <a href="/logout/" class="ml-4 px-4 py-2 rounded-md text-sm font-semibold bg-red-600 text-white hover:bg-red-700 transition-colors"><i class="fas fa-sign-out-alt mr-2"></i>Выйти</a>
+                </div>
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-brand-secondary hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+                        <span class="sr-only">Открыть главное меню</span>
+                        <svg id="icon-open" class="h-6 w-6 block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                        <svg id="icon-close" class="h-6 w-6 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="mobile-menu" class="md:hidden hidden bg-brand-surface/90 border-t border-brand-border">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+               <a href="/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-home mr-3 w-5 text-center"></i>Главная</a>
+               <a href="/dashboard/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-gauge mr-3 w-5 text-center"></i>Кабинет</a>
+               <a href="/my-scooters/" class="block px-3 py-2 rounded-md text-base font-medium bg-gray-800 text-white"><i class="fas fa-motorcycle mr-3 w-5 text-center"></i>Мои самокаты</a>
+               <a href="{% url 'buy_level' %}" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-bolt mr-3 w-5 text-center"></i>Купить уровень</a>
+               <a href="/referral/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-users mr-3 w-5 text-center"></i>Рефералы</a>
+               <a href="{% url 'history' %}" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-history mr-3 w-5 text-center"></i>История</a>
+               <a href="/settings/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-cog mr-3 w-5 text-center"></i>Настройки</a>
+               <a href="/about/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-info-circle mr-3 w-5 text-center"></i>О компании</a>
+               <a href="/logout/" class="block px-3 py-2 rounded-md text-base font-medium text-red-400 hover:bg-red-600 hover:text-white"><i class="fas fa-sign-out-alt mr-3 w-5 text-center"></i>Выйти</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-4 md:p-6 lg:p-8">
+        <div class="mb-8 md:mb-12">
+            <h1 class="text-3xl md:text-4xl font-bold text-white">Мой автопарк</h1>
+            <p class="mt-2 text-lg text-brand-secondary">Управление вашим парком самокатов и прибылью.</p>
+        </div>
+
+        {% if user_scooters %}
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 glass-card p-6 text-center flex flex-col justify-between">
+                <div>
+                    <h2 class="text-2xl font-bold text-white">Статус проката</h2>
+                    <div id="timer-display" class="my-4 text-4xl font-bold text-brand-primary-hover">--:--:--</div>
+                    <div class="flex items-center justify-center gap-3 text-brand-secondary mb-2">
+                        <div id="status-icon" class="w-4 h-4 rounded-full bg-gray-500"></div>
+                        <p id="timer-message">Идёт синхронизация с сервером...</p>
+                    </div>
+                    <div id="progress-animation-container" class="relative w-full max-w-xs h-12 mx-auto mt-2 hidden">
+                        <div class="absolute top-1/2 left-0 w-full h-1.5 bg-brand-border rounded-full transform -translate-y-1/2">
+                            <div id="progress-fill-bar" class="h-full bg-green-500 rounded-full"></div>
+                        </div>
+                        <div id="scooter-svg-container" class="absolute top-0 h-full">
+                            <svg class="w-16 h-12" viewBox="0 0 64 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M20 37C27.732 37 34 30.732 34 23C34 15.268 27.732 9 20 9C12.268 9 6 15.268 6 23C6 30.732 12.268 37 20 37Z" stroke="#4ade80" stroke-width="1.5"/>
+                                <path class="wheel" style="transform-origin: 20px 23px;" d="M20 31C24.4183 31 28 27.4183 28 23C28 18.5817 24.4183 15 20 15C15.5817 15 12 18.5817 12 23C12 27.4183 15.5817 31 20 31Z" stroke="#4ade80" stroke-width="1.5"/>
+                                <path d="M49 37C52.866 37 56 33.866 56 30C56 26.134 52.866 23 49 23C45.134 23 42 26.134 42 30C42 33.866 45.134 37 49 37Z" stroke="#4ade80" stroke-width="1.5"/>
+                                <path class="wheel" style="transform-origin: 49px 30px;" d="M49 34C51.2091 34 53 32.2091 53 30C53 27.7909 51.2091 26 49 26C46.7909 26 45 27.7909 45 30C45 32.2091 46.7909 34 49 34Z" stroke="#4ade80" stroke-width="1.5"/>
+                                <path d="M33 24H45L49 30L51 21L53 19" stroke="#4ade80" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center mt-6">
+                    <button id="claim-button" class="glass-button green">Забрать прибыль</button>
+                    <a href="/monitoring/" class="glass-button blue text-center">Открыть мониторинг</a>
+                </div>
+            </div>
+            <div class="glass-card p-6 space-y-4">
+                <div>
+                    <p class="text-sm text-brand-secondary">Текущий уровень</p>
+                    <p class="text-2xl font-bold text-white">Level {{ highest_level }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-brand-secondary">Всего заработано на прокатах</p>
+                    <p class="text-2xl font-bold text-green-400">€{{ total_rental_earnings|floatformat:2 }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-brand-secondary">Общий баланс</p>
+                    <p class="text-2xl font-bold text-white" id="main-balance-display">€{{ profile.balance|floatformat:2 }}</p>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="mt-12">
+            <h2 class="text-2xl font-bold text-white mb-4">Прошлые отчеты</h2>
+            <div id="reports-container" class="space-y-4">
+                {% for report in past_reports %}
+                <div class="glass-card p-4 report-item">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="font-semibold text-white">Отчет за {{ report.report_date|date:"d.m.Y" }}</p>
+                            <p class="text-sm text-brand-secondary">{{ report.number_of_trips }} поездок • {{ report.total_distance|floatformat:1 }} км</p>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="text-right">
+                                <p class="font-bold text-green-400">+ €{{ report.profit_amount|floatformat:2 }}</p>
+                                <p class="text-sm text-brand-secondary">{{ report.profit_percentage|floatformat:2 }}%</p>
+                            </div>
+                            <button class="download-past-report text-brand-secondary hover:text-brand-primary transition-colors"
+                            data-date="{{ report.report_date|date:'d.m.Y' }}"
+                            data-distance="{{ report.total_distance|floatformat:2 }}"
+                            data-trips="{{ report.number_of_trips }}"
+                            data-percentage="{{ report.profit_percentage|floatformat:2 }}"
+                            data-profit="{{ report.profit_amount|floatformat:2 }}">
+                           <i class="fas fa-file-arrow-down text-lg"></i>
+                           </button>
+
+                        </div>
+                    </div>
+                    <div class="report-details text-sm text-brand-secondary border-t border-brand-border/50 pt-4">
+                        <p><strong>ID отчета:</strong> #{{ report.id|stringformat:"06d" }}</p>
+                        <p><strong>Средняя дистанция поездки:</strong> {{ report.average_distance|floatformat:2 }} км</p>
+                        <p><strong>Статус:</strong> <span class="text-green-400">Завершено</span></p>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-center text-brand-secondary py-8">У вас пока нет отчетов.</p>
+                {% endfor %}
+            </div>
+            {% if past_reports|length > 5 %}
+            <div class="text-center mt-6">
+                <button id="toggle-reports-button" class="text-brand-primary-hover font-semibold text-sm">
+                    <span>Показать все</span> <i class="fas fa-chevron-down ml-1 transition-transform duration-300"></i>
+                </button>
+            </div>
+            {% endif %}
+        </div>
+
+        {% else %}
+        <div class="text-center py-16 glass-card">
+            <i class="fas fa-motorcycle text-4xl text-brand-secondary mb-4"></i>
+            <h3 class="text-xl font-bold text-white">Ваш автопарк пока пуст</h3>
+            <p class="text-brand-secondary mt-2">Начните инвестировать, чтобы увидеть здесь свои самокаты.</p>
+            <a href="{% url 'buy_level' %}" class="mt-6 inline-block px-6 py-2 rounded-md text-sm font-semibold bg-brand-primary text-white hover:bg-brand-primary-hover transition-colors">Выбрать уровень</a>
+        </div>
+        {% endif %}
+    </main>
+
+    <div id="stats-modal" class="modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
+        <div class="modal-content bg-brand-surface border border-brand-border rounded-lg shadow-xl w-full max-w-md mx-auto transform scale-95">
+            <div class="p-6">
+                <div id="report-view">
+                    <div class="flex justify-between items-start">
+                        <h2 class="text-2xl font-bold text-white">Дневной отчет</h2>
+                        <button class="modal-close-button text-brand-secondary hover:text-white transition-colors text-2xl leading-none">&times;</button>
+                    </div>
+                    <div id="report-content" class="mt-4 text-brand-text space-y-3"></div>
+                    <div class="mt-6 flex gap-4">
+                        <button id="download-pdf-button" class="w-full bg-brand-primary text-white font-semibold py-2 px-4 rounded-md hover:bg-brand-primary-hover transition-colors text-sm">Скачать PDF</button>
+                        <button class="modal-close-button w-full bg-brand-border text-white font-semibold py-2 px-4 rounded-md hover:bg-gray-600 transition-colors text-sm">Закрыть</button>
+                    </div>
+                </div>
+                <div id="confirm-view" class="hidden text-center">
+                    <h3 class="text-xl font-semibold text-white">Вы уверены?</h3>
+                    <p class="text-brand-secondary mt-2 mb-6">Вы не скачали чек. Вы уверены, что хотите закрыть окно?</p>
+                    <div class="flex gap-4">
+                        <button id="confirm-close-button" class="w-full bg-red-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-red-700 transition-colors text-sm">Да, закрыть</button>
+                        <button id="cancel-close-button" class="w-full bg-brand-border text-white font-semibold py-2 px-4 rounded-md hover:bg-gray-600 transition-colors text-sm">Нет, остаться</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="container mx-auto text-center py-8 px-4 mt-8 border-t border-brand-border">
+        <p class="text-sm text-brand-secondary">&copy; 2025 Zeepy Inc. Все права защищены.</p>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const body = document.body;
+        window.addEventListener('scroll', () => {
+            const scrollPercentage = window.scrollY / (body.scrollHeight - window.innerHeight);
+            body.style.backgroundPosition = `0% ${scrollPercentage * 100}%`;
+        });
+
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const iconOpen = document.getElementById('icon-open');
+        const iconClose = document.getElementById('icon-close');
+
+        if (mobileMenuButton) {
+            mobileMenuButton.addEventListener('click', () => {
+                const isMenuOpen = mobileMenu.classList.contains('menu-open');
+                iconOpen.classList.toggle('hidden', !isMenuOpen);
+                iconClose.classList.toggle('hidden', isMenuOpen);
+                if (isMenuOpen) {
+                    mobileMenu.classList.remove('menu-open');
+                    mobileMenu.addEventListener('transitionend', e => {
+                        if (e.propertyName === 'transform') mobileMenu.classList.add('hidden');
+                    }, { once: true });
+                } else {
+                    mobileMenu.classList.remove('hidden');
+                    setTimeout(() => mobileMenu.classList.add('menu-open'), 10);
+                }
+            });
+        }
+        
+        const reportItems = document.querySelectorAll('.report-item');
+        reportItems.forEach(item => {
+            item.addEventListener('click', (event) => {
+                if (event.target.closest('.download-past-report')) {
+                    return;
+                }
+                item.classList.toggle('is-expanded');
+            });
+        });
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+
+        const claimButton = document.getElementById('claim-button');
+        const timerDisplay = document.getElementById('timer-display');
+        const timerMessage = document.getElementById('timer-message');
+        const statusIcon = document.getElementById('status-icon');
+        const progressAnimationContainer = document.getElementById('progress-animation-container');
+        let lastClaimTimestamp = "{{ last_claim_timestamp|default_if_none:'' }}";
+        let countdownInterval;
+        let dailyReportData = null;
+
+        function updateTimer() {
+            if (!lastClaimTimestamp) {
+                timerDisplay.textContent = "24:00:00";
+                timerMessage.textContent = 'Нажмите, чтобы запустить 24-часовой цикл.';
+                if(claimButton) {
+                    claimButton.disabled = false;
+                    claimButton.textContent = 'Начать прокат';
+                    claimButton.classList.remove('green');
+                    claimButton.classList.add('blue');
+                }
+                statusIcon.classList.remove('pulsing-icon', 'bg-green-500');
+                statusIcon.classList.add('bg-gray-500');
+                progressAnimationContainer.classList.add('hidden');
+                progressAnimationContainer.classList.remove('is-animating');
+                return;
+            }
+
+            const lastClaimDate = new Date(lastClaimTimestamp);
+            const rentalDuration = 24 * 60 * 60 * 1000;
+            const endDate = new Date(lastClaimDate.getTime() + rentalDuration);
+            const now = new Date();
+            const diff = endDate - now;
+            
+            if (diff <= 0) {
+                clearInterval(countdownInterval);
+                timerDisplay.textContent = "00:00:00";
+                timerMessage.textContent = 'Пожалуйста, заберите прибыль с прокатов!';
+                if(claimButton) {
+                    claimButton.disabled = false;
+                    claimButton.textContent = 'Забрать прибыль';
+                    claimButton.classList.remove('blue');
+                    claimButton.classList.add('green');
+                }
+                statusIcon.classList.remove('bg-gray-500');
+                statusIcon.classList.add('pulsing-icon', 'bg-green-500');
+                progressAnimationContainer.classList.add('hidden');
+                progressAnimationContainer.classList.remove('is-animating');
+            } else {
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                timerDisplay.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                timerMessage.textContent = 'Ваши самокаты сейчас в прокате.';
+                if(claimButton) {
+                    claimButton.disabled = true;
+                    claimButton.textContent = 'Забрать прибыль';
+                    claimButton.classList.remove('blue');
+                    claimButton.classList.add('green');
+                }
+                statusIcon.classList.remove('pulsing-icon', 'bg-gray-500');
+                statusIcon.classList.add('bg-green-500');
+                progressAnimationContainer.classList.remove('hidden');
+                progressAnimationContainer.classList.add('is-animating');
+            }
+        }
+
+        if (claimButton) {
+            claimButton.addEventListener('click', handleClaim);
+        }
+
+        async function handleClaim() {
+            claimButton.disabled = true;
+            claimButton.textContent = 'Обработка...';
+            try {
+                const response = await fetch('/api/claim_profit/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                });
+                const result = await response.json();
+
+                if (result.status === 'started' && result.new_timestamp) {
+                    lastClaimTimestamp = result.new_timestamp;
+                    updateTimer();
+                    countdownInterval = setInterval(updateTimer, 1000);
+                    claimButton.disabled = true;
+                    claimButton.textContent = 'Забрать прибыль';
+                    return;
+                }
+
+                if (!response.ok) throw new Error(result.message || 'Произошла ошибка');
+
+                document.getElementById('main-balance-display').textContent =
+                    `€${parseFloat(result.new_balance).toFixed(2)}`;
+
+                dailyReportData = result.report;
+                showStatsModal(dailyReportData);
+
+            } catch (error) {
+                alert(error.message);
+                claimButton.disabled = false;
+                claimButton.textContent = lastClaimTimestamp ? 'Забрать прибыль' : 'Начать прокат';
+            }
+        }
+        
+        const modal = document.getElementById('stats-modal');
+        const reportView = document.getElementById('report-view');
+        const confirmView = document.getElementById('confirm-view');
+        const reportContentEl = document.getElementById('report-content');
+        const downloadPdfButton = document.getElementById('download-pdf-button');
+        
+        function showStatsModal(report) {
+            reportView.classList.remove('hidden');
+            confirmView.classList.add('hidden');
+            let scooterStatsHtml = '';
+            if (report.scooters && report.scooters.length > 0) {
+                scooterStatsHtml = `<div class="mt-4 pt-4 border-t border-brand-border"><h4 class="font-semibold mb-2 text-white">🛴 Статистика по самокатам:</h4><div class="max-h-64 overflow-y-auto overflow-x-auto custom-scrollbar pr-2"><table class="table-auto w-full text-sm text-left text-brand-text"><thead class="bg-brand-dark text-brand-secondary sticky top-0"><tr><th class="px-3 py-2">#</th><th class="px-3 py-2">Пробег (км)</th><th class="px-3 py-2">Поездки</th><th class="px-3 py-2">Прибыль (€)</th><th class="px-3 py-2">%</th></tr></thead><tbody>${report.scooters.map((scooter, index) => `<tr class="border-t border-brand-border"><td class="px-3 py-2 font-medium">#${index + 1}</td><td class="px-3 py-2">${scooter.distance.toFixed(2)}</td><td class="px-3 py-2">${scooter.trips}</td><td class="px-3 py-2 text-green-400">€${scooter.profit.toFixed(2)}</td><td class="px-3 py-2">${scooter.percentage.toFixed(2)}%</td></tr>`).join('')}</tbody></table></div></div>`;
+            }
+            reportContentEl.innerHTML = `<p class="flex justify-between"><span>Дата отчета:</span> <span class="font-semibold">${report.date}</span></p><p class="flex justify-between"><span>Общий пробег:</span> <span class="font-semibold">${report.distance.toFixed(2)} км</span></p><p class="flex justify-between"><span>Количество поездок:</span> <span class="font-semibold">${report.trips}</span></p><p class="flex justify-between"><span>Процент прибыли:</span> <span class="font-semibold">${report.percentage.toFixed(2)}%</span></p><p class="flex justify-between text-lg mt-1"><b>Сумма прибыли:</b> <b class="text-green-400">€${report.profit.toFixed(2)}</b></p>${scooterStatsHtml}`;
+            modal.classList.remove('hidden');
+        }
+        
+        modal.querySelectorAll('.modal-close-button').forEach(btn => btn.addEventListener('click', () => {
+            reportView.classList.add('hidden');
+            confirmView.classList.remove('hidden');
+        }));
+
+        document.getElementById('cancel-close-button').addEventListener('click', () => {
+            confirmView.classList.add('hidden');
+            reportView.classList.remove('hidden');
+        });
+        
+        document.getElementById('confirm-close-button').addEventListener('click', () => {
+            window.location.reload();
+        });
+    
+ 
+        function generateOfficialPDF(reportData, isDailyReport = false) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const userEmail = reportData.user || "Not specified";
+            
+            // Set up document fonts and colors
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(18);
+            doc.setTextColor(47, 129, 247); // brand-primary color
+            doc.text("Zeepy", 14, 22);
+            
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(12);
+            doc.setTextColor(13, 17, 23); // brand-dark color
+            doc.text(isDailyReport ? "Daily Profit Report" : "Past Profit Report", 14, 30);
+
+            // Main report details table
+            const summaryBody = [
+                ['Report Date', reportData.date],
+                ['User', userEmail],
+                ['Total Trips', String(reportData.trips)],
+                ['Total Distance', `${reportData.distance.toFixed(2)} km`],
+                ['Average Profit', `${reportData.percentage.toFixed(2)}%`],
+                // Style the total profit row
+                [{ content: 'Total Profit', styles: { fontStyle: 'bold' } }, { content: `€${reportData.profit.toFixed(2)}`, styles: { fontStyle: 'bold' } }]
+            ];
+
+            doc.autoTable({
+                startY: 40,
+                head: [['Summary', 'Details']],
+                body: summaryBody,
+                theme: 'grid',
+                headStyles: { fillColor: [22, 27, 34], textColor: 255 }, // Dark header
+                styles: { font: 'helvetica', fontSize: 10 },
+                didParseCell: function (data) {
+                    // Highlight the final profit row
+                    if (data.row.index === summaryBody.length - 1) {
+                        data.cell.styles.fillColor = '#dcfce7'; // Light green background
+                        data.cell.styles.textColor = '#166534'; // Dark green text
+                    }
+                }
+            });
+
+            let finalY = doc.lastAutoTable.finalY || 80;
+
+            // Detailed scooter breakdown for daily reports
+            if (isDailyReport && reportData.scooters && reportData.scooters.length > 0) {
+                const scooterHead = [['#', 'Distance (km)', 'Trips', 'Profit (€)', 'Profit %']];
+                const scooterBody = reportData.scooters.map((scooter, index) => [
+                    `#${index + 1}`,
+                    scooter.distance.toFixed(2),
+                    scooter.trips,
+                    `€${scooter.profit.toFixed(2)}`,
+                    `${scooter.percentage.toFixed(2)}%`
+                ]);
+
+                doc.autoTable({
+                    startY: finalY + 10,
+                    head: scooterHead,
+                    body: scooterBody,
+                    tableLineColor: [22, 27, 34],
+                    headStyles: { fillColor: [22, 27, 34] }, // Dark header
+                    alternateRowStyles: { fillColor: [243, 244, 246] }, // Light gray for rows
+                    styles: { font: 'helvetica', fontSize: 9 },
+                    didDrawPage: (data) => { finalY = data.cursor.y; }
+                });
+            }
+
+            // Add a footer
+            const pageCount = doc.internal.getNumberOfPages();
+            for(let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setTextColor(139, 148, 158); // brand-secondary color
+                doc.text(`© 2025 Zeepy Inc. All rights reserved.`, 14, doc.internal.pageSize.height - 10);
+                doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.width - 35, doc.internal.pageSize.height - 10);
+            }
+            
+            // Save the PDF
+            doc.save(`zeepy_report_${reportData.date.replace(/\./g, '-')}.pdf`);
+        }
+
+        // Attach the function to the daily report download button
+        downloadPdfButton.addEventListener('click', () => {
+            if (dailyReportData) {
+                // Add the current user's email to the report data before generating the PDF
+                dailyReportData.user = "{{ user.email }}"; 
+                generateOfficialPDF(dailyReportData, true);
+            } else {
+                alert("No report data available to download.");
+            }
+        });
+
+        // Attach the function to all past report download buttons
+        document.querySelectorAll('.download-past-report').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent the accordion from toggling
+                const reportData = {
+                    date: button.dataset.date,
+                    distance: parseFloat(button.dataset.distance.replace(',', '.')),
+                    trips: parseInt(button.dataset.trips),
+                    percentage: parseFloat(button.dataset.percentage.replace(',', '.')),
+                    profit: parseFloat(button.dataset.profit.replace(',', '.')),
+                    user: "{{ user.email }}"
+                };
+                // It's a past report, so we pass `false`
+                generateOfficialPDF(reportData, false); 
+            });
+        });
+
+        const reportsContainer = document.getElementById('reports-container');
+        const toggleButton = document.getElementById('toggle-reports-button');
+        if (toggleButton) {
+            const allReportItems = Array.from(reportsContainer.querySelectorAll('.report-item'));
+            if (allReportItems.length > 5) {
+                allReportItems.slice(5).forEach(item => item.classList.add('hidden'));
+            } else {
+                toggleButton.style.display = 'none'; // Скрыть кнопку если отчетов 5 или меньше
+            }
+            toggleButton.addEventListener('click', () => {
+                const isHidden = toggleButton.textContent.includes('Показать все');
+                allReportItems.slice(5).forEach(item => item.classList.toggle('hidden', !isHidden));
+                toggleButton.querySelector('span').textContent = isHidden ? 'Скрыть' : 'Показать все';
+                toggleButton.querySelector('i').classList.toggle('rotate-180', isHidden);
+            });
+        }
+        
+        if (timerDisplay) {
+             updateTimer();
+             if (lastClaimTimestamp) {
+                 countdownInterval = setInterval(updateTimer, 1000);
+             }
+        }
+    });
+    </script>
+</body>
+</html>

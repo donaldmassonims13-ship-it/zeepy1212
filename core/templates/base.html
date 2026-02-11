@@ -1,0 +1,41 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Zeepy — инвестиции в самокаты</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Tailwind CSS -->
+    <link href="{% static 'css/main.css' %}" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+
+
+</head>
+<body class="bg-brand-dark text-white font-sans">
+
+<!-- 🔝 Navbar -->
+<header class="bg-brand-surface border-b border-brand-border sticky top-0 z-50">
+    <div class="container mx-auto px-4 py-2 flex justify-between items-center">
+        <div class="text-2xl font-bold text-white">Zeepy</div>
+        <nav class="flex gap-4 text-sm">
+            <a href="/" class="hover:underline">Главная</a>
+            <a href="/dashboard/" class="hover:underline">Кабинет</a>
+            <a href="/monitoring/" class="hover:underline">Мониторинг</a>
+            <a href="/logout/" class="hover:underline text-red-400">Выход</a>
+        </nav>
+    </div>
+</header>
+
+<!-- ⬇️ Контент -->
+<main class="p-4">
+    {% block content %}
+    {% endblock %}
+</main>
+
+<!-- ⬇️ Scripts -->
+{% block scripts %}{% endblock %}
+
+</body>
+</html>

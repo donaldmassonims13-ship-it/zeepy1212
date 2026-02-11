@@ -1,0 +1,68 @@
+/* ===== Основные стили ===== */
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #0a0a0a;
+    color: #ffffff;
+}
+
+h1, h2, h3, h4, h5 {
+    font-weight: 700;
+    color: #00ffc3;
+}
+
+a {
+    color: #00ffc3;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* ===== Карта ===== */
+
+#map {
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0,255,195,0.2);
+}
+
+/* ===== Навигация (если без Tailwind) ===== */
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem 2rem;
+    background: #08181e;
+    color: white;
+}
+
+.navbar a {
+    margin-left: 1rem;
+    font-weight: 500;
+    color: #aaa;
+}
+
+.navbar a:hover {
+    color: #fff;
+}
+
+/* ===== Tooltip Leaflet (кастомизация) ===== */
+.leaflet-tooltip {
+    background-color: #00ffc3;
+    color: #000;
+    font-weight: bold;
+    border-radius: 8px;
+    padding: 4px 8px;
+    border: none;
+}
+.scooter-icon {
+    animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-2px); }
+}

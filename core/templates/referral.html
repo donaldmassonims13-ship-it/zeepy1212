@@ -1,0 +1,326 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zeepy — Реферальная программа</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            color: #C9D1D9;
+            background-color: #0D1117;
+            background-image: linear-gradient(180deg, #0D1117 0%, #111827 25%, #1D1B36 50%, #112F41 75%, #0D1117 100%);
+            background-size: 100% 400%;
+            background-attachment: fixed;
+            transition: background-position 0.5s ease-out;
+        }
+        
+        nav {
+            background-color: rgba(22, 27, 34, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        #mobile-menu {
+            transform-origin: top;
+            transform: scaleY(0);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        #mobile-menu.menu-open {
+            transform: scaleY(1);
+        }
+
+        /* 🔥 НОВОЕ: Стили для "стеклянных" элементов */
+        .glass-card {
+            background: rgba(22, 27, 34, 0.65);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(88, 166, 255, 0.2);
+            border-radius: 1rem;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        /* 🔥 НОВОЕ: Стили для "стеклянных" кнопок с эффектом трещин */
+        .glass-button {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .glass-button:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+        .glass-button .crack-effect {
+            position: absolute;
+            top: -10%; left: -10%;
+            width: 120%; height: 120%;
+            background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg"><path d="M50 50 L 150 180 M180 80 L 250 250 L 350 220 M80 350 L 180 280 M20 200 L 150 210 M380 50 L 280 150" stroke="rgba(255,255,255,1)" stroke-width="1.2" fill="none" /></svg>');
+            background-size: 100% 100%;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+        }
+        .glass-button:active .crack-effect {
+            opacity: 0.3;
+            transition: opacity 0.1s ease;
+        }
+        .glass-button:active {
+            transform: scale(0.98);
+        }
+        
+        /* 🔥 НОВОЕ: 3D-хрустальные проценты */
+        .crystal-text-wrapper {
+            perspective: 800px;
+        }
+        .crystal-text {
+            font-size: 4rem;
+            font-weight: 800;
+            color: rgba(200, 220, 255, 0.8);
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            text-shadow: 0 0 10px rgba(88, 166, 255, 0.5), 0 0 20px rgba(88, 166, 255, 0.3);
+        }
+        .crystal-text-wrapper:hover .crystal-text {
+            transform: rotateY(360deg);
+        }
+        .crystal-text::before, .crystal-text::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+        .crystal-text::before {
+            transform: translateZ(-2px) scale(0.98);
+            color: rgba(88, 166, 255, 0.5);
+            filter: blur(2px);
+        }
+        .crystal-text::after {
+            transform: translateZ(-1px) scale(0.99);
+            color: rgba(255, 255, 255, 0.3);
+            mix-blend-mode: screen;
+            background: linear-gradient(45deg, var(--glare-start, transparent) 20%, var(--glare-end, white) 50%, var(--glare-start, transparent) 80%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-dark': '#0D1117', 'brand-surface': '#161B22', 'brand-border': '#30363D',
+                        'brand-primary': '#2F81F7', 'brand-primary-hover': '#58A6FF',
+                        'brand-secondary': '#8B949E', 'brand-text': '#C9D1D9', 'brand-success': '#28a745',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-brand-dark text-brand-text antialiased">
+    
+    <nav class="sticky top-0 z-50 border-b border-brand-border/50">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="text-2xl font-bold text-white">Zeepy</div>
+                <div class="hidden md:flex items-center space-x-2">
+                     <a href="/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-home mr-2"></i>Главная</a>
+                     <a href="/dashboard/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-gauge mr-2"></i>Кабинет</a>
+                     <a href="/my-scooters/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-motorcycle mr-2"></i>Мои самокаты</a>
+                     <a href="{% url 'buy_level' %}" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-bolt mr-2"></i>Купить уровень</a>
+                     <a href="/referral/" class="px-3 py-2 rounded-md text-sm font-medium bg-gray-800 text-white"><i class="fas fa-users mr-2"></i>Рефералы</a>
+                     <a href="{% url 'history' %}" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-history mr-2"></i>История</a>
+                     <a href="/monitoring/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-map-marked-alt mr-2"></i>Мониторинг</a>
+                     <a href="/settings/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-cog mr-2"></i>Настройки</a>
+                     <a href="/about/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-info-circle mr-2"></i>О компании</a>
+                     <a href="/logout/" class="ml-4 px-4 py-2 rounded-md text-sm font-semibold bg-red-600 text-white hover:bg-red-700 transition-colors"><i class="fas fa-sign-out-alt mr-2"></i>Выйти</a>
+                </div>
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-brand-secondary hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+                        <span class="sr-only">Открыть главное меню</span>
+                        <svg id="icon-open" class="h-6 w-6 block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                        <svg id="icon-close" class="h-6 w-6 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="mobile-menu" class="md:hidden hidden bg-brand-surface/90 border-t border-brand-border">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                 <a href="/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-home mr-3 w-5 text-center"></i>Главная</a>
+                 <a href="/dashboard/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-gauge mr-3 w-5 text-center"></i>Кабинет</a>
+                 <a href="/my-scooters/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-motorcycle mr-3 w-5 text-center"></i>Мои самокаты</a>
+                 <a href="{% url 'buy_level' %}" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-bolt mr-3 w-5 text-center"></i>Купить уровень</a>
+                 <a href="/referral/" class="block px-3 py-2 rounded-md text-base font-medium bg-gray-800 text-white"><i class="fas fa-users mr-3 w-5 text-center"></i>Рефералы</a>
+                 <a href="{% url 'history' %}" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-history mr-3 w-5 text-center"></i>История</a>
+                 <a href="/monitoring/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-map-marked-alt mr-3 w-5 text-center"></i>Мониторинг</a>
+                 <a href="/settings/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-cog mr-3 w-5 text-center"></i>Настройки</a>
+                 <a href="/about/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-info-circle mr-3 w-5 text-center"></i>О компании</a>
+                 <a href="/logout/" class="block px-3 py-2 rounded-md text-base font-medium text-red-400 hover:bg-red-600 hover:text-white"><i class="fas fa-sign-out-alt mr-3 w-5 text-center"></i>Выйти</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-4 md:p-6 lg:p-8">
+        <div class="mb-8 md:mb-12" data-aos="fade-down">
+            <h1 class="text-3xl md:text-4xl font-bold text-white">Реферальная программа</h1>
+            <p class="mt-2 text-lg text-brand-secondary">Приглашайте друзей и получайте пассивный доход от их инвестиций.</p>
+        </div>
+
+        <div class="glass-card p-6 mb-8" data-aos="fade-up">
+            <h2 class="text-xl font-semibold text-white mb-2">Ваша пригласительная ссылка</h2>
+            <p class="text-sm text-brand-secondary mb-4">Поделитесь этой ссылкой, чтобы ваши друзья регистрировались по ней.</p>
+            
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                <input type="text" id="ref-link-input" value="{{ referral_link }}" class="w-full bg-brand-dark/50 border border-brand-border rounded-md p-2 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-primary" readonly>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <button onclick="copyReferralLink()" class="glass-button w-full sm:w-auto bg-brand-primary/80 text-white px-4 py-2 rounded-md hover:bg-brand-primary-hover/90 text-sm font-bold">
+                        <span class="crack-effect"></span>
+                        Копировать
+                    </button>
+                    <button id="share-button" onclick="shareReferralLink()" class="hidden glass-button w-full sm:w-auto bg-gray-600/80 text-white px-4 py-2 rounded-md hover:bg-gray-700/90 text-sm font-bold items-center">
+                        <span class="crack-effect"></span>
+                        <i class="fas fa-share-alt mr-2"></i>Поделиться
+                    </button>
+                </div>
+            </div>
+            <div id="copy-success-message" class="text-green-400 text-xs mt-2 hidden">Ссылка скопирована!</div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8" data-aos="fade-up" data-aos-delay="100">
+            <div class="glass-card p-6"><p class="text-sm text-brand-secondary">Всего заработано</p><p class="text-3xl font-bold text-green-400">€{{ referral_earnings|floatformat:2 }}</p></div>
+            <div class="glass-card p-6"><p class="text-sm text-brand-secondary">Всего рефералов</p><p class="text-3xl font-bold text-white">{{ total_referrals }}</p></div>
+            <div class="glass-card p-6"><p class="text-sm text-brand-secondary">Рефералов 1-го уровня</p><p class="text-3xl font-bold text-white">{{ level1_referrals.count }}</p></div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 text-center" data-aos="fade-up" data-aos-delay="200">
+            <div class="glass-card p-6 crystal-text-wrapper"><p class="crystal-text" data-text="9%">9%</p><p class="mt-2 text-brand-secondary">от покупок рефералов 1-го уровня</p></div>
+            <div class="glass-card p-6 crystal-text-wrapper"><p class="crystal-text" data-text="3%">3%</p><p class="mt-2 text-brand-secondary">от покупок рефералов 2-го уровня</p></div>
+            <div class="glass-card p-6 crystal-text-wrapper"><p class="crystal-text" data-text="1%">1%</p><p class="mt-2 text-brand-secondary">от покупок рефералов 3-го уровня</p></div>
+        </div>
+
+        <div data-aos="fade-up" data-aos-delay="300">
+            <h2 class="text-2xl font-bold text-white mb-4">Ваши приглашенные</h2>
+            <div class="space-y-6">
+                <div class="glass-card p-6">
+                    <h3 class="font-semibold text-white mb-3">Уровень 1 ({{ level1_referrals.count }} чел.)</h3>
+                    <ul class="space-y-2 max-h-48 overflow-y-auto">
+                        {% for ref in level1_referrals %}<li class="text-brand-text text-sm">{{ ref.username }}</li>{% empty %}<li class="text-brand-secondary text-sm">У вас пока нет рефералов 1-го уровня.</li>{% endfor %}
+                    </ul>
+                </div>
+                <div class="glass-card p-6">
+                    <h3 class="font-semibold text-white mb-3">Уровень 2 ({{ level2_referrals.count }} чел.)</h3>
+                    <ul class="space-y-2 max-h-48 overflow-y-auto">
+                        {% for ref in level2_referrals %}<li class="text-brand-text text-sm">{{ ref.username }}</li>{% empty %}<li class="text-brand-secondary text-sm">У вас пока нет рефералов 2-го уровня.</li>{% endfor %}
+                    </ul>
+                </div>
+                <div class="glass-card p-6">
+                    <h3 class="font-semibold text-white mb-3">Уровень 3 ({{ level3_referrals.count }} чел.)</h3>
+                    <ul class="space-y-2 max-h-48 overflow-y-auto">
+                        {% for ref in level3_referrals %}<li class="text-brand-text text-sm">{{ ref.username }}</li>{% empty %}<li class="text-brand-secondary text-sm">У вас пока нет рефералов 3-го уровня.</li>{% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <footer class="container mx-auto text-center py-8 px-4 mt-8 border-t border-brand-border/50">
+        <p class="text-sm text-brand-secondary">&copy; {% now "Y" %} Zeepy Inc. Все права защищены.</p>
+    </footer>
+    
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        function copyReferralLink() {
+            const input = document.getElementById('ref-link-input');
+            const successMessage = document.getElementById('copy-success-message');
+            if (!input || !successMessage) return;
+            navigator.clipboard.writeText(input.value).then(() => {
+                successMessage.classList.remove('hidden');
+                setTimeout(() => { successMessage.classList.add('hidden'); }, 2000);
+            }).catch(err => console.error('Не удалось скопировать ссылку: ', err));
+        }
+
+        async function shareReferralLink() {
+            const input = document.getElementById('ref-link-input');
+            if (!input) return;
+            const shareData = {
+                title: 'Приглашение в Zeepy',
+                text: 'Присоединяйся к Zeepy и получай пассивный доход!',
+                url: input.value
+            };
+            try {
+                await navigator.share(shareData);
+            } catch (err) {
+                console.log("Пользователь отменил отправку или произошла ошибка: ", err);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            AOS.init({ duration: 800, once: true });
+
+            const body = document.body;
+            window.addEventListener('scroll', () => {
+                const scrollPercentage = window.scrollY / (body.scrollHeight - window.innerHeight);
+                body.style.backgroundPosition = `0% ${scrollPercentage * 100}%`;
+            });
+
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const iconOpen = document.getElementById('icon-open');
+            const iconClose = document.getElementById('icon-close');
+
+            if (mobileMenuButton) {
+                mobileMenuButton.addEventListener('click', () => {
+                    const isMenuOpen = mobileMenu.classList.contains('menu-open');
+                    iconOpen.classList.toggle('hidden', !isMenuOpen);
+                    iconClose.classList.toggle('hidden', isMenuOpen);
+                    if (isMenuOpen) {
+                        mobileMenu.classList.remove('menu-open');
+                        mobileMenu.addEventListener('transitionend', e => {
+                            if (e.propertyName === 'transform') mobileMenu.classList.add('hidden');
+                        }, { once: true });
+                    } else {
+                        mobileMenu.classList.remove('hidden');
+                        setTimeout(() => mobileMenu.classList.add('menu-open'), 10);
+                    }
+                });
+            }
+
+            const shareButton = document.getElementById('share-button');
+            if (shareButton && navigator.share) {
+                shareButton.classList.remove('hidden');
+            }
+
+            // 🔥 НОВОЕ: Анимация блика на хрустальных цифрах
+            const crystalTexts = document.querySelectorAll('.crystal-text');
+            crystalTexts.forEach(text => {
+                text.parentElement.addEventListener('mousemove', e => {
+                    const rect = text.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const glareX = (x / rect.width) * 100;
+                    const glareY = (y / rect.height) * 100;
+                    text.style.setProperty('--glare-start', `rgba(255, 255, 255, ${0.5 - (y/rect.height)*0.5})`);
+                    text.style.setProperty('--glare-end', `rgba(255, 255, 255, ${1 - (y/rect.height)*0.8})`);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

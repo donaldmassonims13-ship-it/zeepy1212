@@ -1,0 +1,468 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zeepy — Инвестиционные планы</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com/3.4.1?plugins=line-clamp"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+    <style>
+        @keyframes animate-background {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 0% 100%; }
+            100% { background-position: 0% 0%; }
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: #C9D1D9;
+            background-color: #0D1117;
+            background-image: linear-gradient(180deg, #0D1117 0%, #111827 25%, #1D1B36 50%, #112F41 75%, #0D1117 100%);
+            background-size: 100% 400%;
+            background-attachment: fixed;
+            animation: animate-background 30s ease infinite;
+        }
+        
+        nav {
+            background-color: rgba(22, 27, 34, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        #mobile-menu {
+            transform-origin: top;
+            transform: scaleY(0);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        #mobile-menu.menu-open {
+            transform: scaleY(1);
+        }
+
+        /* Стили для "стеклянных" элементов */
+        .glass-effect {
+            background: rgba(22, 27, 34, 0.65);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(88, 166, 255, 0.2);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Стили для "стеклянных" кнопок с эффектом трещин */
+        .glass-button {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+        .glass-button .crack-effect {
+            position: absolute;
+            top: -10%; left: -10%;
+            width: 120%; height: 120%;
+            background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg"><path d="M50 50 L 150 180 M180 80 L 250 250 L 350 220 M80 350 L 180 280 M20 200 L 150 210 M380 50 L 280 150" stroke="rgba(255,255,255,1)" stroke-width="1.2" fill="none" /></svg>');
+            background-size: 100% 100%;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+        }
+        .glass-button:active .crack-effect {
+            opacity: 0.3;
+            transition: opacity 0.1s ease;
+        }
+        .glass-button:active {
+            transform: scale(0.98);
+        }
+
+        /* Стили для кастомного скроллбара */
+        .custom-scrollbar::-webkit-scrollbar { height: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #161B22; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #30363D; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #58A6FF; }
+        
+        /* Анимация галочки */
+        .checkmark__circle { stroke-dasharray: 166; stroke-dashoffset: 166; stroke-width: 2; stroke-miterlimit: 10; stroke: #4BB543; fill: none; animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards; }
+        .checkmark { width: 80px; height: 80px; border-radius: 50%; display: block; stroke-width: 3; stroke: #fff; stroke-miterlimit: 10; margin: 10% auto; box-shadow: inset 0px 0px 0px #4BB543; animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both; }
+        .checkmark__check { transform-origin: 50% 50%; stroke-dasharray: 48; stroke-dashoffset: 48; animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards; }
+        @keyframes stroke { 100% { stroke-dashoffset: 0; } }
+        @keyframes scale { 0%, 100% { transform: none; } 50% { transform: scale3d(1.1, 1.1, 1); } }
+        @keyframes fill { 100% { box-shadow: inset 0px 0px 0px 40px #4BB543; } }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-dark': '#0D1117', 'brand-surface': '#161B22', 'brand-border': '#30363D',
+                        'brand-primary': '#2F81F7', 'brand-primary-hover': '#58A6FF',
+                        'brand-secondary': '#8B949E', 'brand-text': '#C9D1D9', 'brand-success': '#238636',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-brand-dark text-brand-text antialiased">
+    <nav class="sticky top-0 z-50 border-b border-brand-border/50">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <div class="text-2xl font-bold text-white">Zeepy</div>
+                <div class="hidden md:flex items-center space-x-2">
+                     <a href="/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-home mr-2"></i>Главная</a>
+                     <a href="/dashboard/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-gauge mr-2"></i>Кабинет</a>
+                     <a href="/my-scooters/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-motorcycle mr-2"></i>Мои самокаты</a>
+                     <a href="{% url 'buy_level' %}" class="px-3 py-2 rounded-md text-sm font-medium bg-gray-800 text-white"><i class="fas fa-bolt mr-2"></i>Купить уровень</a>
+                     <a href="/referral/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-users mr-2"></i>Рефералы</a>
+                     <a href="{% url 'history' %}" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-history mr-2"></i>История</a>
+                     <a href="/settings/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-cog mr-2"></i>Настройки</a>
+                     <a href="/about/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-info-circle mr-2"></i>О компании</a>
+                     <a href="/monitoring/" class="px-3 py-2 rounded-md text-sm font-medium text-brand-secondary hover:bg-gray-700 hover:text-white transition-colors"><i class="fas fa-map-marked-alt mr-2"></i>Мониторинг</a>
+                     <a href="/logout/" class="ml-4 px-4 py-2 rounded-md text-sm font-semibold bg-red-600 text-white hover:bg-red-700 transition-colors"><i class="fas fa-sign-out-alt mr-2"></i>Выйти</a>
+                </div>
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-brand-secondary hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+                        <span class="sr-only">Открыть главное меню</span>
+                        <svg id="icon-open" class="h-6 w-6 block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                        <svg id="icon-close" class="h-6 w-6 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="mobile-menu" class="md:hidden hidden bg-brand-surface/90 border-t border-brand-border">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                 <a href="/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-home mr-3 w-5 text-center"></i>Главная</a>
+                 <a href="/dashboard/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-gauge mr-3 w-5 text-center"></i>Кабинет</a>
+                 <a href="/my-scooters/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-motorcycle mr-3 w-5 text-center"></i>Мои самокаты</a>
+                 <a href="{% url 'buy_level' %}" class="block px-3 py-2 rounded-md text-base font-medium bg-gray-800 text-white"><i class="fas fa-bolt mr-3 w-5 text-center"></i>Купить уровень</a>
+                 <a href="/referral/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-users mr-3 w-5 text-center"></i>Рефералы</a>
+                 <a href="{% url 'history' %}" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-history mr-3 w-5 text-center"></i>История</a>
+                 <a href="/settings/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-cog mr-3 w-5 text-center"></i>Настройки</a>
+                 <a href="/about/" class="block px-3 py-2 rounded-md text-base font-medium text-brand-secondary hover:bg-gray-700 hover:text-white"><i class="fas fa-info-circle mr-3 w-5 text-center"></i>О компании</a>
+                 <a href="/logout/" class="block px-3 py-2 rounded-md text-base font-medium text-red-400 hover:bg-red-600 hover:text-white"><i class="fas fa-sign-out-alt mr-3 w-5 text-center"></i>Выйти</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-4 md:p-6 lg:p-8">
+        <div class="text-center mb-8 md:mb-12">
+            <h1 class="text-3xl md:text-4xl font-bold text-white">Инвестиционные планы</h1>
+            <p class="mt-2 text-lg text-brand-secondary max-w-2xl mx-auto">Выберите свой уровень, чтобы начать или расширить свой портфель пассивного дохода.</p>
+        </div>
+
+        <div class="flex overflow-x-auto space-x-6 pb-6 custom-scrollbar">
+            {% for level in levels %}
+        <div class="level-card flex-shrink-0 w-80 glass-effect rounded-xl p-6 flex flex-col transition-transform duration-300 hover:-translate-y-2"
+                    data-level-id="{{ level.id }}"
+                     data-level-number="{{ level.number }}"
+                     data-level-price="{{ level.price }}"
+                     data-level-image="{% static 'images/zeepyscooter.png' %}"
+                     data-level-description="{{ level.description|default:'Подробное описание для этого уровня скоро появится.' }}">
+                <div class="flex-grow cursor-pointer level-info-trigger">
+                    <div class="text-center mb-4">
+                        <p class="text-sm text-brand-secondary">Инвестиционный план {{ level.number }}</p>
+
+                    </div>
+                    <div class="bg-brand-dark/50 rounded-lg p-4 mb-4 text-center">
+                        <p class="text-sm text-brand-secondary">Инвестиция</p>
+                        <p class="text-3xl font-bold text-white">${{ level.price|floatformat:2 }}</p>
+                    </div>
+                    <div class="text-sm space-y-2 mb-4">
+                        <p class="flex justify-between">
+                            <span class="text-brand-secondary">Доход в день:</span>
+                            <span class="font-semibold text-green-400 income-amount-display"></span>
+                        </p>
+                        <p class="flex justify-between">
+                            <span class="text-brand-secondary">Процент в день:</span>
+                            <span class="font-semibold text-brand-primary-hover">2% - 3.5%</span>
+                        </p>
+                    </div>
+                </div>
+                <!-- 🔥 ИСПРАВЛЕНО: Добавлен span для текста -->
+                <button type="button" class="buy-button glass-button w-full mt-auto text-center block px-4 py-2 rounded-lg text-sm font-semibold bg-brand-primary/80 text-white hover:bg-brand-primary-hover/90">
+                    <span class="crack-effect"></span>
+                    <span>Инвестировать</span>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+    
+    <div id="level-info-modal" class="modal-backdrop fixed inset-0 z-[60] flex items-start justify-center p-4 hidden overflow-y-auto pt-12 md:items-center md:pt-4">
+        <div class="modal-content glass-effect rounded-xl shadow-xl w-full max-w-lg mx-auto transform scale-95">
+            <div class="p-4 sm:p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <h2 id="info-modal-title" class="text-xl sm:text-2xl font-bold text-white pr-4"></h2>
+                    <button class="modal-close-button text-brand-secondary hover:text-white transition-colors text-3xl leading-none flex-shrink-0">&times;</button>
+                </div>
+                <div class="flex flex-col md:flex-row gap-6">
+                    <img id="info-modal-image" src="" alt="Изображение уровня" class="w-full md:w-1/2 h-64 md:h-auto object-contain rounded-md bg-brand-dark/50">
+                    <div class="text-brand-text flex-1 flex flex-col">
+                        <div id="description-container" class="flex-grow">
+                            <p id="info-modal-description" class="mb-2 text-sm sm:text-base transition-all duration-300"></p>
+                        </div>
+                        <button id="read-more-btn" class="text-brand-primary-hover font-semibold text-sm self-start mt-1 hidden">Читать далее</button>
+                        <div class="mt-4 pt-4 border-t border-brand-border/50 space-y-2 text-sm sm:text-base">
+                            <p class="flex justify-between"><span class="font-semibold">Инвестиция:</span> <span id="info-modal-price" class="font-bold"></span></p>
+                            <p class="flex justify-between"><span class="font-semibold">Дневной доход:</span> <span id="info-modal-income-amount" class="font-bold text-green-400"></span></p>
+                            <p class="flex justify-between"><span class="font-semibold">Процентная ставка:</span> <span class="font-bold text-brand-primary-hover">2% - 3.5%</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="payment-modal" class="modal-backdrop fixed inset-0 z-[60] flex items-center justify-center p-4 hidden">
+        <div class="modal-content glass-effect rounded-xl shadow-xl w-full max-w-md mx-auto transform scale-95">
+            <div id="payment-view">
+                <div class="p-6">
+                    <div class="flex justify-between items-start">
+                        <h2 id="payment-modal-title" class="text-2xl font-bold text-white">Оплата уровня</h2>
+                        <button class="modal-close-button text-brand-secondary hover:text-white transition-colors text-2xl leading-none">&times;</button>
+                    </div>
+                    <div class="mt-4 text-brand-text">
+                        <p class="text-sm bg-brand-dark/50 p-3 rounded-lg border border-brand-border/50">
+                            <b>Инструкция:</b><br>
+                            1. Отправьте точную сумму <b id="payment-amount" class="text-brand-primary-hover"></b> в <b class="text-yellow-400">USDT (сеть TRC-20)</b> на кошелек ниже.<br>
+                            2. После успешной отправки, нажмите кнопку "Я оплатил".<br>
+                            3. Ожидайте подтверждения 10-15 минут. Статус можно отследить во вкладке "История".
+                        </p>
+                        <div class="mt-4">
+                            <label class="text-sm font-semibold">Кошелек для оплаты (USDT TRC-20):</label>
+                            <div class="flex mt-1">
+                                <input type="text" id="wallet-address" value="TSRJauGRuuCja2MYdXzrr1NQEgZF9jXKdA" readonly class="w-full bg-brand-dark/50 border border-brand-border rounded-l-md p-2 text-sm text-brand-text focus:outline-none">
+                                <button id="copy-button" class="bg-brand-primary text-white px-4 rounded-r-md hover:bg-brand-primary-hover transition-colors text-sm font-bold">Копировать</button>
+                            </div>
+                            <div id="copy-success" class="text-green-400 text-xs mt-1 hidden">Адрес скопирован!</div>
+                        </div>
+                        <div class="mt-6">
+                            <!-- 🔥 ИСПРАВЛЕНО: Добавлен span для текста -->
+                            <button id="paid-button" class="glass-button w-full bg-green-600/80 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700/90">
+                                <span class="crack-effect"></span>
+                                <span>Я оплатил</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="success-view" class="hidden">
+                 <div class="p-8 text-center">
+                    <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                        <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
+                        <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                    </svg>
+                    <h2 class="text-2xl font-bold text-white mt-4">Запрос отправлен!</h2>
+                    <p class="text-brand-secondary mt-2">Мы получили ваш запрос. Статус покупки обновится в разделе "История" после подтверждения транзакции.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="container mx-auto text-center py-8 px-4 mt-8 border-t border-brand-border">
+        <p class="text-sm text-brand-secondary">&copy; 2025 Zeepy Inc. Все права защищены.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+            const csrftoken = getCookie('csrftoken');
+
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const iconOpen = document.getElementById('icon-open');
+            const iconClose = document.getElementById('icon-close');
+
+            mobileMenuButton.addEventListener('click', () => {
+                const isMenuOpen = mobileMenu.classList.contains('menu-open');
+                iconOpen.classList.toggle('hidden', !isMenuOpen);
+                iconClose.classList.toggle('hidden', isMenuOpen);
+                if (isMenuOpen) {
+                    mobileMenu.classList.remove('menu-open');
+                    mobileMenu.addEventListener('transitionend', e => {
+                        if (e.propertyName === 'transform') mobileMenu.classList.add('hidden');
+                    }, { once: true });
+                } else {
+                    mobileMenu.classList.remove('hidden');
+                    setTimeout(() => mobileMenu.classList.add('menu-open'), 10);
+                }
+            });
+
+            const levelCards = document.querySelectorAll('.level-card');
+            let currentLevelId = null;
+
+            const infoModal = document.getElementById('level-info-modal');
+            const readMoreBtn = document.getElementById('read-more-btn');
+            const descriptionP = infoModal.querySelector('#info-modal-description');
+            const paymentModal = document.getElementById('payment-modal');
+            const copyButton = document.getElementById('copy-button');
+            const walletAddressInput = document.getElementById('wallet-address');
+            const paidButton = document.getElementById('paid-button');
+
+            const openInfoModal = (card) => {
+                const name = card.dataset.levelName;
+                const number = card.dataset.levelNumber;
+                const price = parseFloat(card.dataset.levelPrice);
+                const image = card.dataset.levelImage;
+                const description = card.dataset.levelDescription;
+                const income = calculateIncome(price);
+
+                infoModal.querySelector('#info-modal-title').innerText = `Уровень ${number}`;
+                infoModal.querySelector('#info-modal-image').src = image;
+                descriptionP.innerText = description;
+                infoModal.querySelector('#info-modal-price').innerText = `$${price.toFixed(2)}`;
+                infoModal.querySelector('#info-modal-income-amount').innerText = income.amount;
+                
+                descriptionP.classList.remove('line-clamp-4');
+                readMoreBtn.classList.add('hidden');
+                
+                setTimeout(() => {
+                    const isClamped = descriptionP.scrollHeight > descriptionP.clientHeight;
+                    if (isClamped) {
+                        descriptionP.classList.add('line-clamp-4');
+                        readMoreBtn.classList.remove('hidden');
+                        readMoreBtn.innerText = 'Читать далее';
+                    }
+                }, 10);
+                
+                showModal(infoModal);
+            };
+
+            readMoreBtn.addEventListener('click', () => {
+                if (descriptionP.classList.contains('line-clamp-4')) {
+                    descriptionP.classList.remove('line-clamp-4');
+                    readMoreBtn.innerText = 'Свернуть';
+                } else {
+                    descriptionP.classList.add('line-clamp-4');
+                    readMoreBtn.innerText = 'Читать далее';
+                }
+            });
+
+            const openPaymentModal = (card) => {
+                const price = parseFloat(card.dataset.levelPrice);
+                const number = card.dataset.levelNumber;
+                currentLevelId = card.dataset.levelId;
+                const textSpan = paidButton.querySelector('span:not(.crack-effect)');
+
+                paymentModal.querySelector('#payment-modal-title').innerText = `Оплата Level ${number}`;
+                paymentModal.querySelector('#payment-amount').innerText = `$${price.toFixed(2)}`;
+                
+                paymentModal.querySelector('#payment-view').classList.remove('hidden');
+                paymentModal.querySelector('#success-view').classList.add('hidden');
+                paidButton.disabled = false;
+                // 🔥 ИСПРАВЛЕНО: Обновляем текст через span
+                if (textSpan) textSpan.textContent = 'Я оплатил';
+
+                showModal(paymentModal);
+            };
+            
+            copyButton.addEventListener('click', () => {
+                walletAddressInput.select();
+                document.execCommand('copy');
+                const successMsg = document.getElementById('copy-success');
+                successMsg.classList.remove('hidden');
+                setTimeout(() => { successMsg.classList.add('hidden'); }, 2000);
+            });
+
+            paidButton.addEventListener('click', async () => {
+                const textSpan = paidButton.querySelector('span:not(.crack-effect)');
+                if (!textSpan) return; // Защита от ошибки
+
+                paidButton.disabled = true;
+                const originalText = textSpan.textContent;
+                textSpan.textContent = 'Обработка...';
+
+                try {
+                    const response = await fetch('/api/create_buy_request/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                        body: JSON.stringify({ level_id: currentLevelId })
+                    });
+                    if (!response.ok) throw new Error(`Ошибка сервера: ${response.statusText}`);
+                    paymentModal.querySelector('#payment-view').classList.add('hidden');
+                    paymentModal.querySelector('#success-view').classList.remove('hidden');
+                    const synth = new Tone.Synth().toDestination();
+                    Tone.start();
+                    synth.triggerAttackRelease("C5", "8n", Tone.now());
+                    synth.triggerAttackRelease("G5", "8n", Tone.now() + 0.2);
+                    setTimeout(() => closeModal(paymentModal), 4000);
+                } catch (error) {
+                    console.error("Ошибка при отправке запроса:", error);
+                    textSpan.textContent = 'Ошибка!';
+                    setTimeout(() => {
+                       paidButton.disabled = false;
+                       textSpan.textContent = originalText;
+                    }, 2000);
+                }
+            });
+
+            const calculateIncome = (price) => {
+                if (!price) return { amount: '', min: 0, max: 0 };
+                const min = price * 0.02;
+                const max = price * 0.035;
+                return { amount: `$${min.toFixed(2)} – $${max.toFixed(2)}` };
+            };
+
+            const showModal = (modalElement) => {
+                modalElement.classList.remove('hidden');
+                setTimeout(() => {
+                    modalElement.style.opacity = '1';
+                    modalElement.querySelector('.modal-content').style.transform = 'scale(1)';
+                }, 10);
+            };
+            
+            const closeModal = (modalElement) => {
+                if (!modalElement || modalElement.classList.contains('hidden')) return;
+                modalElement.style.opacity = '0';
+                modalElement.querySelector('.modal-content').style.transform = 'scale(0.95)';
+                setTimeout(() => modalElement.classList.add('hidden'), 300);
+            };
+
+            levelCards.forEach(card => {
+                const price = parseFloat(card.dataset.levelPrice);
+                const income = calculateIncome(price);
+                card.querySelector('.income-amount-display').textContent = income.amount;
+                card.querySelector('.level-info-trigger').addEventListener('click', () => openInfoModal(card));
+                card.querySelector('.buy-button').addEventListener('click', () => openPaymentModal(card));
+            });
+
+            document.querySelectorAll('.modal-close-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    closeModal(infoModal);
+                    closeModal(paymentModal);
+                });
+            });
+            document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+                backdrop.addEventListener('click', (event) => {
+                    if (event.target === backdrop) {
+                        closeModal(infoModal);
+                        closeModal(paymentModal);
+                    }
+                });
+            });
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') {
+                    closeModal(infoModal);
+                    closeModal(paymentModal);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
