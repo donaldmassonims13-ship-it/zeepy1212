@@ -241,22 +241,46 @@ def create_buy_request(request):
 
 @login_required
 def my_scooters_view(request):
-    scooters = UserScooter.objects.filter(user=request.user)
-    profile = get_object_or_404(Profile, user=request.user)
-    last = Transaction.objects.filter(user=request.user, type='earning').order_by('-created_at').first()
-    last_ts = last.created_at.isoformat() if last else None
-    past = DailyReport.objects.filter(user=request.user)
-    highest = scooters.aggregate(max_level=Max('level__number'))['max_level'] or 0
-    total_rental = Transaction.objects.filter(user=request.user, type='earning').aggregate(total=Sum('amount'))['total'] or 0
+    try:
+        scooters = UserScooter.objects.filter(user=request.user)
+        profile = get_object_or_404(Profile, user=request.user)
+        last = Transaction.objects.filter(user=request.user, type='earning').order_by('-created_at').first()
+        last_ts = last.created_at.isoformat() if last else None
+        past = DailyReport.objects.filter(user=request.user)
+        highest = scooters.aggregate(max_level=Max('level__number'))['max_level'] or 0
+        total_rental = Transaction.objects.filter(user=request.user, type='earning').aggregate(total=Sum('amount'))['total'] or 0
 
-    return render(request, 'my_scooters.html', {
-        'user_scooters': scooters,
-        'profile': profile,
-        'last_claim_timestamp': last_ts,
-        'past_reports': past,
-        'highest_level': highest,
-        'total_rental_earnings': total_rental,
-    })
+        return render(request, 'my_scooters.html', {
+            'user_scooters': scooters,
+            'profile': profile,
+            'last_claim_timestamp': last_ts,
+            'past_reports': past,
+            'highest_level': highest,
+            'total_rental_earnings': total_rental,
+        })
+    except Exception as e:
+        # Логируем ошибку для отладки на Render
+        import logging
+        import traceback
+        logger = logging.getLogger(__name__)
+        error_msg = f"Error in my_scooters_view: {str(e)}\n{traceback.format_exc()}"
+        logger.error(error_msg)
+        print(f"[ERROR] my_scooters_view failed: {error_msg}")  # Для логов Render
+        
+        # В режиме DEBUG показываем ошибку, иначе пустую страницу
+        from django.conf import settings
+        if settings.DEBUG:
+            from django.http import HttpResponse
+            return HttpResponse(f"<h1>Ошибка в my_scooters_view</h1><pre>{error_msg}</pre>", status=500)
+        # Возвращаем страницу с пустыми данными
+        return render(request, 'my_scooters.html', {
+            'user_scooters': [],
+            'profile': None,
+            'last_claim_timestamp': None,
+            'past_reports': [],
+            'highest_level': 0,
+            'total_rental_earnings': 0,
+        })
 
 
 @login_required
