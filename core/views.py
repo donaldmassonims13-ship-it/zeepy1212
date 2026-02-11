@@ -151,6 +151,9 @@ def history(request):
 def buy_view(request):
     try:
         levels = ScooterLevel.objects.all().order_by('number')
+        # Проверяем, что уровни есть
+        if not levels.exists():
+            print("[WARNING] buy_view: No ScooterLevel objects found in database")
         return render(request, 'buy_level.html', {'levels': levels})
     except Exception as e:
         # Логируем ошибку для отладки на Render
@@ -161,12 +164,9 @@ def buy_view(request):
         logger.error(error_msg)
         print(f"[ERROR] buy_view failed: {error_msg}")  # Для логов Render
         
-        # В режиме DEBUG показываем ошибку, иначе пустой список
-        from django.conf import settings
-        if settings.DEBUG:
-            from django.http import HttpResponse
-            return HttpResponse(f"<h1>Ошибка в buy_view</h1><pre>{error_msg}</pre>", status=500)
-        return render(request, 'buy_level.html', {'levels': []})
+        # Всегда показываем ошибку в ответе для отладки
+        from django.http import HttpResponse
+        return HttpResponse(f"<h1>Ошибка в buy_view</h1><pre>{error_msg}</pre>", status=500)
 
 
 def payment_view(request):
