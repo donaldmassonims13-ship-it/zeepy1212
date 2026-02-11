@@ -149,8 +149,24 @@ def history(request):
 
 
 def buy_view(request):
-    levels = ScooterLevel.objects.all().order_by('number')
-    return render(request, 'buy_level.html', {'levels': levels})
+    try:
+        levels = ScooterLevel.objects.all().order_by('number')
+        return render(request, 'buy_level.html', {'levels': levels})
+    except Exception as e:
+        # Логируем ошибку для отладки на Render
+        import logging
+        import traceback
+        logger = logging.getLogger(__name__)
+        error_msg = f"Error in buy_view: {str(e)}\n{traceback.format_exc()}"
+        logger.error(error_msg)
+        print(f"[ERROR] buy_view failed: {error_msg}")  # Для логов Render
+        
+        # В режиме DEBUG показываем ошибку, иначе пустой список
+        from django.conf import settings
+        if settings.DEBUG:
+            from django.http import HttpResponse
+            return HttpResponse(f"<h1>Ошибка в buy_view</h1><pre>{error_msg}</pre>", status=500)
+        return render(request, 'buy_level.html', {'levels': []})
 
 
 def payment_view(request):
